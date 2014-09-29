@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Rally 2 Mind Map</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Styles -->
+    <link href="../bootstrap-232/css/bootstrap.css" rel="stylesheet">
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+    </style>
+
+    <!-- Favorite and touch icons -->
+    <link rel="shortcut icon" href="../icons/favicon.ico">
+
+	<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+
+<!-- Google Analytics -->
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-32244838-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+<script>
+	// global variables
+	var mindMap = {};
+	var pointer = {};
+	
+	// create the global root mindMap object
+	mindMap.id = "UUID_A";
+	mindMap.revision = "0";
+	mindMap.version = 3;
+	mindMap.root = {};
+	mindMap.root.id = "UUID_B";
+	mindMap.root.attributes = {};
+	mindMap.root.attributes.type = "rootnode";
+	mindMap.root.children = [];
+</script>
+
+<script>
+	// rewrite the ALM Obj ref to Page URL depending on Story or PI
+	function ALMobjRefToPage(refURL) {
+		
+		var pageURL = "Ref_URL_ERROR";
+		
+		if (refURL.indexOf("portfolioitem") >= 0) {
+			pageURL = refURL.replace("slm/webservice/v2.0","#/detail");
+		} else if (refURL.indexOf("hierarchicalrequirement") >= 0) {
+			pageURL = refURL.replace("slm/webservice/v2.0/hierarchicalrequirement","#/detail/userstory");
+		} else  {
+			document.write("Ref URL ERROR");
+		}
+		
+		return pageURL;
+	}
+</script>
+
+<script>
+function processChildrenJSONP (childURI, pointer) {
+
+	jQuery.ajax({
+		url: childURI,
+		type: 'GET',
+		timeout: 100000,
+		dataType: 'jsonp',
+		jsonp: 'jsonp',
+		success: function(ALMobj, responseStatus, jqXHR) {
+			var numResults = ALMobj.QueryResult.TotalResultCount;
+			// if paging, dont deal with it yet
+			if (numResults > 20) {
+				numResults = 20;
+			}
+
+			// write the ALM Object data into the MindMap object
+			for (var i=0; i < numResults; i++) {
+				pointer[i] = {};
+				pointer[i].id = "UUID_C" + ALMobj.QueryResult.Results[i].ObjectID;
+				pointer[i].attributes = {};
+				pointer[i].attributes.type = "container";
+				pointer[i].attributes.text = ALMobj.QueryResult.Results[i].Name;
+				pointer[i].attributes.lastEditor = "null";
+				pointer[i].attributes.lastEdit = null;
+				pointer[i].attributes.note = ALMobj.QueryResult.Results[i].FormattedID + ", " + ALMobj.QueryResult.Results[i].DirectChildrenCount + " children";
+// + ALMobj.QueryResult.Results[i].LeafStoryCount or DirectChildrenCount for User Stories, bleh
+ 
+				// display status of artifact in icon
+				if (ALMobj.QueryResult.Results[i].PercentDoneByStoryCount == 1) {
+					pointer[i].attributes.icon = "flag_green";
+				} else if (ALMobj.QueryResult.Results[i].PercentDoneByStoryCount > 0) {
+					pointer[i].attributes.icon = "flag_red";
+				} else if (ALMobj.QueryResult.Results[i].ScheduleState == "Completed") {
+					pointer[i].attributes.icon = "flag_green";
+				} else if (ALMobj.QueryResult.Results[i].ScheduleState == "Accepted") {
+					pointer[i].attributes.icon = "flag_green";
+				} else if (ALMobj.QueryResult.Results[i].ScheduleState == "Released") {
+					pointer[i].attributes.icon = "flag_green";
+				} else if (ALMobj.QueryResult.Results[i].ScheduleState == "In-Progress") {
+					pointer[i].attributes.icon = "flag_red";
+				} else {
+					pointer[i].attributes.icon = "";
+				}
+
+				pointer[i].attributes.font = {};
+				pointer[i].attributes.font.color = "inherit";
+				pointer[i].attributes.font.size = "default";
+				pointer[i].attributes.font.bold = "default";
+				pointer[i].attributes.font.underlined = "default";
+				pointer[i].attributes.font.italic = "default";
+				pointer[i].attributes.links = {};
+				// convert the ALM object ref to an ALM page for easier viewing and editing
+				pointer[i].attributes.links.url = ALMobjRefToPage(ALMobj.QueryResult.Results[i]._ref);
+				pointer[i].attributes.todo = [];
+				pointer[i].attributes.image = null;
+				pointer[i].children = [];
+
+				var numChildren = ALMobj.QueryResult.Results[i].DirectChildrenCount;
+
+				//didnt want to deal with paging in ALM API, so limiting to 20 direct children
+				if (numChildren > 20) {
+					numChildren = 20;
+				}
+
+				// if there are any children with children, recurse into them
+				if (numChildren > 0) {
+					// handle Features different because they dont have Children, UserStories instead
+					if (ALMobj.QueryResult.Results[i]._type == "PortfolioItem/Feature") {
+						childrenRef = ALMobj.QueryResult.Results[i].UserStories._ref;
+					} else {
+						childrenRef = ALMobj.QueryResult.Results[i].Children._ref;
+					}
+				
+					pointer2 = pointer[i].children;
+					processChildrenJSONP(childrenRef, pointer2);
+				}
+			}
+		},
+		error: function(x, t, m) { 
+			console.log('Uh Oh! Error getting Child');
+			document.write("ERROR IN THE INNER LOOP");
+		},
+		complete: function(jqXHR, textStatus) {
+		// this is not the right place to be writing the output because it writes all recursions
+		}
+	});
+} // end of processChildrenJSONP function
+</script>
+
+<script>
+// CORS version of this function
+function processChildrenCORS(childURI, pointer) {
+		
+	// need to convert URI to lowercase for CORS filter, this needs to be fixed
+	var xhr = createCORSRequest('GET', childURI.toLowerCase());
+	if(!xhr) {
+		alert('CORS not supported');
+		return;
+	}
+	
+	// Response handlers
+	xhr.onload = function() {
+		var text = xhr.responseText;
+		var ALMobj = JSON.parse(this.response);
+		
+		var numResults = ALMobj.QueryResult.TotalResultCount;
+		// if paging, dont deal with it yet
+		if (numResults > 20) {
+			numResults = 20;
+		}
+
+		// write the ALM Object data into the MindMap object
+		for (var i=0; i < numResults; i++) {
+			pointer[i] = {};
+			pointer[i].id = "UUID_C" + ALMobj.QueryResult.Results[i].ObjectID;
+			pointer[i].attributes = {};
+			pointer[i].attributes.type = "container";
+			pointer[i].attributes.text = ALMobj.QueryResult.Results[i].Name;
+			pointer[i].attributes.lastEditor = "null";
+			pointer[i].attributes.lastEdit = null;
+			pointer[i].attributes.note = ALMobj.QueryResult.Results[i].FormattedID + ", " + ALMobj.QueryResult.Results[i].DirectChildrenCount + " children";
+			// + ALMobj.QueryResult.Results[i].LeafStoryCount or DirectChildrenCount for User Stories, bleh
+
+			// display status of artifact in icon
+			if (ALMobj.QueryResult.Results[i].PercentDoneByStoryCount == 1) {
+				pointer[i].attributes.icon = "flag_green";
+			} else if (ALMobj.QueryResult.Results[i].PercentDoneByStoryCount > 0) {
+				pointer[i].attributes.icon = "flag_red";
+			} else if (ALMobj.QueryResult.Results[i].ScheduleState == "Completed") {
+				pointer[i].attributes.icon = "flag_green";
+			} else if (ALMobj.QueryResult.Results[i].ScheduleState == "Accepted") {
+				pointer[i].attributes.icon = "flag_green";
+			} else if (ALMobj.QueryResult.Results[i].ScheduleState == "Released") {
+				pointer[i].attributes.icon = "flag_green";
+			} else if (ALMobj.QueryResult.Results[i].ScheduleState == "In-Progress") {
+				pointer[i].attributes.icon = "flag_red";
+			} else {
+				pointer[i].attributes.icon = "";
+			}
+
+			pointer[i].attributes.font = {};
+			pointer[i].attributes.font.color = "inherit";
+			pointer[i].attributes.font.size = "default";
+			pointer[i].attributes.font.bold = "default";
+			pointer[i].attributes.font.underlined = "default";
+			pointer[i].attributes.font.italic = "default";
+			pointer[i].attributes.links = {};
+			// convert the ALM object ref to an ALM page for easier viewing and editing
+			pointer[i].attributes.links.url = ALMobjRefToPage(ALMobj.QueryResult.Results[i]._ref);
+			pointer[i].attributes.todo = [];
+			pointer[i].attributes.image = null;
+			pointer[i].children = [];
+
+			var numChildren = ALMobj.QueryResult.Results[i].DirectChildrenCount;
+
+			//didnt want to deal with paging in ALM API, so limiting to 20 direct children
+			if (numChildren > 20) {
+				numChildren = 20;
+			}
+
+			// if there are any children with children, recurse into them
+			if (numChildren > 0) {
+				// handle Features different because they dont have Children, UserStories instead
+				if (ALMobj.QueryResult.Results[i]._type == "PortfolioItem/Feature") {
+					childrenRef = ALMobj.QueryResult.Results[i].UserStories._ref;
+				} else {
+					childrenRef = ALMobj.QueryResult.Results[i].Children._ref;
+				}
+
+				pointer2 = pointer[i].children;
+				processChildrenCORS(childrenRef, pointer2);
+			}
+		}
+	};
+	
+	xhr.onloadend = function() {
+	};
+	
+	xhr.onerror = function() {
+		alert('There was an error making the CORS request to Children');
+		console.log(this.response);
+	};
+	
+	// do it
+	xhr.send();
+}
+</script>
+
+<script>
+// JSONP version of this function
+function startProcessingALMObjectJSONP(URI) {
+
+	// get the root node info from ALM and write to the MindMap object
+	jQuery.ajax({
+		url: URI,
+		type: 'GET',
+		timeout: 100000,
+		dataType: 'jsonp',
+		jsonp: 'jsonp',
+		success: function(ALMobj, responseStatus, jqXHR) {
+			mindMap.root.attributes.text = ALMobj.QueryResult.Results[0]._refObjectName;
+			var numChildren = ALMobj.QueryResult.Results[0].DirectChildrenCount;
+
+			// if there are any children objects, do this stuff
+			if (numChildren > 0) {
+
+				// get URI to the children, complicated because of stupid Feature object inconsistency
+				if (ALMobj.QueryResult.Results._type == "PortfolioItem/Feature") {
+					URItoChildren = ALMobj.QueryResult.Results[0].UserStories._ref;
+				} else {
+					URItoChildren = ALMobj.QueryResult.Results[0].Children._ref;
+				}
+
+				// get the MindMap child node that will be passed to processChildren function
+				pointer = mindMap.root.children;
+			}
+		},
+		error: function(x, t, m) { 
+			console.log('Uh Oh! Couldnt get the root ALM object');
+			document.write("ERROR GETTING THE ROOT ALM OBJECT");
+		},
+		complete: function(jqXHR, textStatus) {
+			processChildrenJSONP(URItoChildren, pointer);
+		}
+	});
+} // end of startProcessingALMObjectJSONP function
+</script>
+
+<script>
+// Create the XHR object for the CORS request
+function createCORSRequest(method, URI) {
+	
+	var xhr = new XMLHttpRequest();
+	if("withCredentials" in xhr) {
+		// XHR for Chrome, Firefox, Opera and Safari
+		xhr.withCredentials = true;
+		xhr.open(method, URI, true);
+	} else if (typeof XDomainRequest != "undefined") {
+		// XDomainRequest for IE
+		xhr = new XDomainRequest();
+		xhr.open(method, URI);
+	} else {
+		// CORS not supported
+		xhr = null;
+	}
+	return xhr;
+}
+</script>
+
+<script>
+// CORS version of this function
+function startProcessingALMObjectCORS(URI) {
+	
+	var xhr = createCORSRequest('GET', URI);
+	if(!xhr) {
+		alert('CORS not supported');
+		return;
+	}
+	
+	// Response handlers
+	xhr.onload = function() {
+		var text = xhr.responseText;
+		var ALMobj = JSON.parse(this.response);
+		mindMap.root.attributes.text = ALMobj.QueryResult.Results[0]._refObjectName;
+		var numChildren = ALMobj.QueryResult.Results[0].DirectChildrenCount;
+
+		// if there are any children objects, do this stuff
+		if (numChildren > 0) {
+
+			// get URI to the children, complicated because of stupid Feature object inconsistency
+			if (ALMobj.QueryResult.Results._type == "PortfolioItem/Feature") {
+				URItoChildren = ALMobj.QueryResult.Results[0].UserStories._ref;
+			} else {
+				URItoChildren = ALMobj.QueryResult.Results[0].Children._ref;
+			}
+
+		// get the MindMap child node that will be passed to processChildren function
+		pointer = mindMap.root.children;
+		}
+	};
+	
+	xhr.onloadend = function() {
+		processChildrenCORS(URItoChildren, pointer);
+	};
+	
+	xhr.onerror = function() {
+		alert('There was an error making the CORS request to Parent');
+	};
+	
+	// do it
+	xhr.send();
+}
+</script>
+
+<script>
+	function writeOutput(form) {
+		// write out the full MindMap object to screen because no MM42 API
+		document.write(JSON.stringify(mindMap));
+	}
+</script>
+
+<script>
+	function processFormattedID(form) {
+		
+		var formFIDvalue = form.FIDvalue.value;
+		var FIDtype = "FormattedID_ERROR";
+		
+		if (formFIDvalue.indexOf("STR") >= 0) {
+			FIDtype = "portfolioitem/Strategy"
+		} else if (formFIDvalue.indexOf("TH") >= 0) {
+			FIDtype = "portfolioitem/Theme"
+		} else if (formFIDvalue.indexOf("I") >= 0) {
+			FIDtype = "portfolioitem/Initiative"
+		} else if (formFIDvalue.indexOf("F") >= 0) {
+			FIDtype = "portfolioitem/Feature"
+		} else if (formFIDvalue.indexOf("S") >= 0) {
+			FIDtype = "HierarchicalRequirement"
+		} else {
+			document.write("Object FormattedID not valid.");
+		}
+
+		var URI = "https://rally1.rallydev.com/slm/webservice/v2.0/" + FIDtype + "?query=(FormattedID%20%3D%20%22" + formFIDvalue + "%22)&start=1&pagesize=100&fetch=true";
+
+		var radioValue = form.callTypeRadios;
+		if(radioValue[0].checked) {
+			console.log('SELECTED CORS');
+			startProcessingALMObjectCORS(URI);
+		} else if(radioValue[1].checked) {
+			console.log('SELECTED JSONP');
+			startProcessingALMObjectJSONP(URI);
+		}
+
+	}
+</script>
+
+</head>
+<body>
+
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <a class="brand" href="http://www.ericshiflet.com">EricShiflet.com</a>
+          <div class="nav-collapse">
+            <ul class="nav">
+              <li class="active"><a href="http://www.ericshiflet.com">Home</a></li>
+              <li><a href="#about">About</a></li>
+              <li><a href="../contact.html">Contact</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+<div class="container">
+	<div class="hero-unit">
+
+		<h2>Convert Rally Object to Mind Map</h2>
+		<p>
+		<p>Enter the Formatted ID of a Rally object such as a User Story, Feature, Initiative or Theme. Submit the object for processing and then press the Write Mind Map Object button to write the mind map code to the screen. You can then save the output to a file and import it into <a href="http://mind42.com/">Mind42</a>, a free web-based mind map tool. Mind42 does not yet have an API, hence the necessity to save the file from this site and load it manually into Mind42.
+		</p>
+	</div>
+
+	<div class="row">
+	<form name="inputForm" action="" method="GET">
+		<div class="span4">
+	
+			<fieldset>
+				<p>
+				<label>Enter FormattedID Below:</label>
+				<input class="input-small pull-left" type="text" name="FIDvalue" id="FIDvalue" VALUE="TH2553" />
+				<input class="btn btn-primary pull-left" type="button" name="submitForm" value="Submit" onClick="processFormattedID(this.form)" style="margin-left: 10px">
+			</fieldset>
+
+		</div>
+		<div class="span4">
+			<label class="radio">
+				<p><input type="radio" name="callTypeRadios" id="optionsRadiosCORS" value="CORS" checked>
+				Use CORS for cross-site request
+			</label>
+			<label>
+				<input type="radio" name="callTypeRadios" id="optionsRadiosJSONP" value="JSONP">
+				Use JSONP for cross-site request
+			</label>
+		</div>
+		<div class="span4">
+			<input class="btn btn-primary" type="button" name="submitForm" value="Write Mind Map Object" onClick="writeOutput(this.form)">
+		</div>
+	</form>
+	</div>
+  <hr>
+  <footer>
+    <p>&copy; Eric Shiflet 2013</p>
+  </footer>
+
+</div>
+
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="../bootstrap-232/js/bootstrap.js"></script>
+
+</body>
+</html>

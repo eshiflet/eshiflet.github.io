@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="utf-8">
+<head>
+
+    <meta charset="utf-8">
+    <title>View Rally Objects in a Tree Diagram</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+	<script src="http://d3js.org/d3.v3.min.js"></script>
+	<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+	<script src="../bootstrap-232/js/bootstrap.js"></script>
+
+    <link href="../bootstrap-232/css/bootstrap.css" rel="stylesheet">
+    <link rel="shortcut icon" href="../icons/favicon.ico">
+
+<style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+
+	.node circle {
+  		fill: #fff;
+  		stroke: steelblue;
+  		stroke-width: 1.5px;
+	}
+
+	.node {
+  		font: 10px sans-serif;
+	}
+
+	.link {
+  		fill: none;
+  		stroke: #ccc;
+  		stroke-width: 1.5px;
+	}
+
+</style>
+
+<script type="text/javascript">	// Google Analytics
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-32244838-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+<script>	// global variables
+	var mindMap = {};
+		mindMap.children = [];  // initialized mindMap object
+	var pointer = {};
+	var parent_counter = 0;     // counter for number of recursive calls
+</script>
+
+<script>	// Create the XHR object for the CORS request
+function createCORSRequest(method, URI) {
+	
+	var xhr = new XMLHttpRequest();
+	if("withCredentials" in xhr) {
+		// XHR for Chrome, Firefox, Opera and Safari
+		xhr.withCredentials = true;
+		xhr.open(method, URI, true);
+	} else if (typeof XDomainRequest != "undefined") {
+		// XDomainRequest for IE
+		xhr = new XDomainRequest();
+		xhr.open(method, URI);
+	} else {
+		// CORS not supported
+		xhr = null;
+	}
+	return xhr;
+}
+</script>
+
+<script>
+function processChildren(childURI, pointer) {
+
+	// need to convert URI to lowercase for CORS filter, this needs to be fixed
+	var xhr = createCORSRequest('GET', childURI.toLowerCase());
+	if(!xhr) {
+		alert('CORS not supported');
+		return;
+	}
+	
+	// Response handlers
+	xhr.onload = function() {
+		var text = xhr.responseText;
+		var ALMobj = JSON.parse(this.response);
+
+		var numResults = ALMobj.QueryResult.TotalResultCount;
+		// if paging, dont deal with it yet
+		if (numResults > 20) {
+			numResults = 20;
+		}
+
+		// write the ALM Object data into the MindMap object
+		for (var i=0; i < numResults; i++) {
+
+			console.log("Working on parent number: " + parent_counter + " child number: " + i + " ID: " + ALMobj.QueryResult.Results[i].FormattedID);
+			
+			pointer[i] = {};
+			pointer[i].name = ALMobj.QueryResult.Results[i].FormattedID;
+			// + " " + ALMobj.QueryResult.Results[i].Name;
+			pointer[i].children = [];
+
+			var numChildren = ALMobj.QueryResult.Results[i].DirectChildrenCount;
+
+			// didnt want to deal with paging in ALM API, so limiting to 20 direct children
+			if (numChildren > 20) {
+				numChildren = 20;
+			}
+
+			// if there are any nodes with children, recurse into them
+			if (numChildren > 0) {
+
+				++parent_counter;
+				// handle Features different because they dont have Children, UserStories instead
+				if (ALMobj.QueryResult.Results[i]._type == "PortfolioItem/Feature") {
+					childrenRef = ALMobj.QueryResult.Results[i].UserStories._ref;
+				} else {
+					childrenRef = ALMobj.QueryResult.Results[i].Children._ref;
+				}
+
+				pointer2 = pointer[i].children;
+				processChildren(childrenRef, pointer2);
+			}
+		}
+	};
+	
+	xhr.onloadend = function() {
+		--parent_counter;
+		if (parent_counter == 0) {
+			console.log("Its a Hootenanny!");
+			showGraph();
+		}
+	};
+	
+	xhr.onerror = function() {
+		alert('There was an error making the CORS request to Children');
+		console.log(this.response);
+	};
+	
+	// do it
+	xhr.send();
+}
+</script>
+
+<script>
+function startProcessingALMObject(URI) {
+	
+	var xhr = createCORSRequest('GET', URI);
+	if(!xhr) {
+		alert('CORS not supported');
+		return;
+	}
+	
+	// Response handlers
+	xhr.onload = function() {
+		var text = xhr.responseText;
+		var ALMobj = JSON.parse(this.response);
+
+		mindMap.name = ALMobj.QueryResult.Results[0].FormattedID;
+		// + " " + ALMobj.QueryResult.Results[0]._refObjectName;
+		var numChildren = ALMobj.QueryResult.Results[0].DirectChildrenCount;
+
+		// if there are any children objects, do this stuff
+		if (numChildren > 0) {
+
+			++parent_counter;
+			// get URI to the children, complicated because of stupid Feature object inconsistency
+			if (ALMobj.QueryResult.Results._type == "PortfolioItem/Feature") {
+				URItoChildren = ALMobj.QueryResult.Results[0].UserStories._ref;
+			} else {
+				URItoChildren = ALMobj.QueryResult.Results[0].Children._ref;
+			}
+
+			// get the MindMap child node that will be passed to processChildren function
+			pointer = mindMap.children;
+			processChildren(URItoChildren, pointer);
+		}
+	};
+	
+	xhr.onloadend = function() {
+	};
+	
+	xhr.onerror = function() {
+		alert('There was an error making the CORS request to the Root Node');
+	};
+	
+	// do it
+	xhr.send();
+}
+</script>
+
+<script>
+	function processFormattedID(form) {
+		var formFIDvalue = form.FIDvalue.value;
+		console.log("the form said: " + formFIDvalue);
+		
+		var FIDtype = "FormattedID_ERROR";
+		
+		if (formFIDvalue.indexOf("STR") >= 0) {
+			FIDtype = "portfolioitem/Strategy"
+		} else if (formFIDvalue.indexOf("TH") >= 0) {
+			FIDtype = "portfolioitem/Theme"
+		} else if (formFIDvalue.indexOf("I") >= 0) {
+			FIDtype = "portfolioitem/Initiative"
+		} else if (formFIDvalue.indexOf("F") >= 0) {
+			FIDtype = "portfolioitem/Feature"
+		} else if (formFIDvalue.indexOf("S") >= 0) {
+			FIDtype = "HierarchicalRequirement"
+		} else {
+			document.write("Object FormattedID not valid.");
+		}
+
+		var URI = "https://rally1.rallydev.com/slm/webservice/v2.0/" + FIDtype + "?query=(FormattedID%20%3D%20%22" + formFIDvalue + "%22)&start=1&pagesize=100&fetch=true";
+
+		var treeRadioValue = form.treeTypeRadios;
+		if(treeRadioValue[0].checked) {
+			console.log('SELECTED STATIC');
+			startProcessingALMObject(URI);
+		} else if(treeRadioValue[1].checked) {
+			console.log('SELECTED DYNAMIC');
+//			startProcessingALMObjectJSONP(URI);
+		}
+	
+	}
+</script>
+
+<script>
+function showGraph() {
+
+	console.log("Hi There, mindMap is: ");
+	console.log(mindMap);
+		
+	var width = 1000,
+	    height = 1500;
+	
+	var tree = d3.layout.tree()
+	    .size([height, width - 160]);
+
+	var diagonal = d3.svg.diagonal()
+	    .projection(function(d) { return [d.y, d.x]; });
+
+	var svg = d3.select("body").append("svg")
+	    .attr("width", width)
+	    .attr("height", height)
+	    .append("g")
+	    .attr("transform", "translate(40,0)");
+		
+	  var nodes = tree.nodes(mindMap),
+	      links = tree.links(nodes);
+		
+	  var link = svg.selectAll("path.link")
+	      .data(links)
+	      .enter().append("path")
+	      .attr("class", "link")
+	      .attr("d", diagonal);
+
+	  var node = svg.selectAll("g.node")
+	      .data(nodes)
+	      .enter().append("g")
+	     .attr("class", "node")
+	      .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
+
+	  node.append("circle")
+	      .attr("r", 4.5);
+
+	  node.append("text")
+	      .attr("dx", function(d) { return d.children ? -8 : 8; })
+	      .attr("dy", 3)
+	      .attr("text-anchor", function(d) { return d.children ? "end" : "start"; })
+	      .text(function(d) { return d.name; });
+		
+	d3.select(self.frameElement).style("height", height + "px");
+}
+</script>
+
+</head>
+<body>
+
+	<div class="navbar navbar-inverse navbar-fixed-top">
+	      <div class="navbar-inner">
+	        <div class="container">
+	          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+	            <span class="icon-bar"></span>
+	            <span class="icon-bar"></span>
+	            <span class="icon-bar"></span>
+	          </a>
+	          <a class="brand" href="http://www.ericshiflet.com">EricShiflet.com</a>
+	          <div class="nav-collapse">
+	            <ul class="nav">
+	              <li class="active"><a href="http://www.ericshiflet.com">Home</a></li>
+	              <li><a href="#about">About</a></li>
+	              <li><a href="../contact.html">Contact</a></li>
+	            </ul>
+	          </div><!--/.nav-collapse -->
+	        </div>
+	      </div>
+	</div>
+
+	<div class="container">
+
+		<div class="hero-unit">
+			<h2>Convert Rally Object to a Mind Map</h2>
+			<p>
+			<p>Enter the Formatted ID of a Rally object such as a User Story, Feature, Initiative or Theme. Click the Submit button and then wait a little while to process the object and render the Mind Map.  Be patient.  Depending on how many objects are in your tree, it might take a minute to download all the information from Rally.  You can watch the progress by turning on the JavaScript Console in the Chrome browser.
+			</p>
+		</div>
+
+		<div class="row">
+			<form name="inputForm" action="" method="GET">
+				<div class="span4">
+					<fieldset>
+						<label>Enter FormattedID Below:</label>
+						<input class="input-small pull-left" type="text" name="FIDvalue" id="FIDvalue" value="STR2550">
+						<input class="btn btn-primary pull-left" type="button" name="submitForm" value="Submit" onClick="processFormattedID(this.form)" style="margin-left: 10px">
+					</fieldset>
+				</div>
+				
+				<div class="span4">
+					<label class="radio">
+						<input type="radio" name="treeTypeRadios" id="optionsRadiosStatic" value="Static" checked>
+						Create a static tree
+					</label>
+					<label class="radio">
+						<input type="radio" name="treeTypeRadios" id="optionsRadiosDynamic" value="Dynamic">
+						Create a dynamic tree with collapsing nodes
+					</label>
+				</div>
+				
+				<div class="span4">
+					<p class="text-right">&copy; Eric Shiflet 2013</p>
+				</div>
+			</form>
+		</div>
+	
+	</div>
+
+</body>
+</html>

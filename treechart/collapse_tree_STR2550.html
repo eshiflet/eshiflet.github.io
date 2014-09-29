@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+<style>
+
+.node circle {
+  fill: #fff;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+
+.node {
+  font: 10px sans-serif;
+}
+
+.link {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 1.5px;
+}
+
+</style>
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+
+<script>
+	// global variables
+	var mindMap = {};
+	var pointer = {};
+	
+	// initialize globals
+	mindMap.children = [];
+</script>
+
+<script>
+function processChildren(childURI, pointer) {
+
+	// print number of increments to the console
+	var incr_print = 1;
+
+	// need to convert URI to lowercase for CORS filter, this needs to be fixed
+	var xhr = createCORSRequest('GET', childURI.toLowerCase());
+	if(!xhr) {
+		alert('CORS not supported');
+		return;
+	}
+	
+	// Response handlers
+	xhr.onload = function() {
+		var text = xhr.responseText;
+		var ALMobj = JSON.parse(this.response);
+		
+		var numResults = ALMobj.QueryResult.TotalResultCount;
+		// if paging, dont deal with it yet
+		if (numResults > 20) {
+			numResults = 20;
+		}
+
+		// write the ALM Object data into the MindMap object
+		for (var i=0; i < numResults; i++) {
+			pointer[i] = {};
+			pointer[i].name = ALMobj.QueryResult.Results[i].FormattedID;
+			//+ " " + ALMobj.QueryResult.Results[i].Name;
+			pointer[i].children = [];
+
+			var numChildren = ALMobj.QueryResult.Results[i].DirectChildrenCount;
+
+			//didnt want to deal with paging in ALM API, so limiting to 20 direct children
+			if (numChildren > 20) {
+				numChildren = 20;
+			}
+
+			// if there are any children with children, recurse into them
+			if (numChildren > 0) {
+				// handle Features different because they dont have Children, UserStories instead
+				if (ALMobj.QueryResult.Results[i]._type == "PortfolioItem/Feature") {
+					childrenRef = ALMobj.QueryResult.Results[i].UserStories._ref;
+				} else {
+					childrenRef = ALMobj.QueryResult.Results[i].Children._ref;
+				}
+
+				pointer2 = pointer[i].children;
+				++incr_print;
+				processChildren(childrenRef, pointer2);
+			}
+		}
+	};
+	
+	xhr.onloadend = function() {
+		console.log("Increment: " + incr_print);
+	};
+	
+	xhr.onerror = function() {
+		alert('There was an error making the CORS request to Children');
+		console.log(this.response);
+	};
+	
+	// do it
+	xhr.send();
+}
+</script>
+
+<script>
+// Create the XHR object for the CORS request
+function createCORSRequest(method, URI) {
+	
+	var xhr = new XMLHttpRequest();
+	if("withCredentials" in xhr) {
+		// XHR for Chrome, Firefox, Opera and Safari
+		xhr.withCredentials = true;
+		xhr.open(method, URI, true);
+	} else if (typeof XDomainRequest != "undefined") {
+		// XDomainRequest for IE
+		xhr = new XDomainRequest();
+		xhr.open(method, URI);
+	} else {
+		// CORS not supported
+		xhr = null;
+	}
+	return xhr;
+}
+</script>
+
+<script>
+function startProcessingALMObject(URI) {
+	
+	var xhr = createCORSRequest('GET', URI);
+	if(!xhr) {
+		alert('CORS not supported');
+		return;
+	}
+	
+	// Response handlers
+	xhr.onload = function() {
+		var text = xhr.responseText;
+		var ALMobj = JSON.parse(this.response);
+		mindMap.name = ALMobj.QueryResult.Results[0].FormattedID;
+		// + " " + ALMobj.QueryResult.Results[0]._refObjectName;
+		var numChildren = ALMobj.QueryResult.Results[0].DirectChildrenCount;
+
+		// if there are any children objects, do this stuff
+		if (numChildren > 0) {
+
+			// get URI to the children, complicated because of stupid Feature object inconsistency
+			if (ALMobj.QueryResult.Results._type == "PortfolioItem/Feature") {
+				URItoChildren = ALMobj.QueryResult.Results[0].UserStories._ref;
+			} else {
+				URItoChildren = ALMobj.QueryResult.Results[0].Children._ref;
+			}
+
+		// get the MindMap child node that will be passed to processChildren function
+		pointer = mindMap.children;
+		}
+	};
+	
+	xhr.onloadend = function() {
+		processChildren(URItoChildren, pointer);
+	};
+	
+	xhr.onerror = function() {
+		alert('There was an error making the CORS request to Parent');
+	};
+	
+	// do it
+	xhr.send();
+}
+</script>
+
+<script>
+	var URI = "https://rally1.rallydev.com/slm/webservice/v2.0/" + "portfolioitem/Strategy" + "?query=(FormattedID%20%3D%20%22" + "STR2550" + "%22)&start=1&pagesize=100&fetch=true";
+	
+	startProcessingALMObject(URI);
+</script>
+
+<script>
+	function showGraph(form) {
+		console.log("Hi There, midMap is: ");
+		console.log(mindMap);
+		
+		var margin = {top: 20, right: 120, bottom: 20, left: 200},
+		    width = 1200 - margin.right - margin.left,
+		    height = 1200 - margin.top - margin.bottom;
+
+		var i = 0,
+		    duration = 750,
+		    root;
+
+		var tree = d3.layout.tree()
+		    .size([height, width]);
+
+		var diagonal = d3.svg.diagonal()
+		    .projection(function(d) { return [d.y, d.x]; });
+
+		var svg = d3.select("body").append("svg")
+		    .attr("width", width + margin.right + margin.left)
+		    .attr("height", height + margin.top + margin.bottom)
+		  .append("g")
+		    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+		  root = mindMap;
+		  root.x0 = height / 2;
+		  root.y0 = 0;
+
+		  function collapse(d) {
+		    if (d.children) {
+		      d._children = d.children;
+		      d._children.forEach(collapse);
+		      d.children = null;
+		    }
+		  }
+
+		  root.children.forEach(collapse);
+		  update(root);
+
+		d3.select(self.frameElement).style("height", "800px");
+
+		function update(source) {
+
+		  // Compute the new tree layout.
+		  var nodes = tree.nodes(root).reverse(),
+		      links = tree.links(nodes);
+
+		  // Normalize for fixed-depth.
+		  nodes.forEach(function(d) { d.y = d.depth * 180; });
+
+		  // Update the nodes…
+		  var node = svg.selectAll("g.node")
+		      .data(nodes, function(d) { return d.id || (d.id = ++i); });
+
+		  // Enter any new nodes at the parent's previous position.
+		  var nodeEnter = node.enter().append("g")
+		      .attr("class", "node")
+		      .attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
+		      .on("click", click);
+
+		  nodeEnter.append("circle")
+		      .attr("r", 1e-6)
+		      .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
+
+		  nodeEnter.append("text")
+		      .attr("x", function(d) { return d.children || d._children ? -10 : 10; })
+		      .attr("dy", ".35em")
+		      .attr("text-anchor", function(d) { return d.children || d._children ? "end" : "start"; })
+		      .text(function(d) { return d.name; })
+		      .style("fill-opacity", 1e-6);
+
+		  // Transition nodes to their new position.
+		  var nodeUpdate = node.transition()
+		      .duration(duration)
+		      .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; });
+
+		  nodeUpdate.select("circle")
+		      .attr("r", 4.5)
+		      .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
+
+		  nodeUpdate.select("text")
+		      .style("fill-opacity", 1);
+
+		  // Transition exiting nodes to the parent's new position.
+		  var nodeExit = node.exit().transition()
+		      .duration(duration)
+		      .attr("transform", function(d) { return "translate(" + source.y + "," + source.x + ")"; })
+		      .remove();
+
+		  nodeExit.select("circle")
+		      .attr("r", 1e-6);
+
+		  nodeExit.select("text")
+		      .style("fill-opacity", 1e-6);
+
+		  // Update the links…
+		  var link = svg.selectAll("path.link")
+		      .data(links, function(d) { return d.target.id; });
+
+		  // Enter any new links at the parent's previous position.
+		  link.enter().insert("path", "g")
+		      .attr("class", "link")
+		      .attr("d", function(d) {
+		        var o = {x: source.x0, y: source.y0};
+		        return diagonal({source: o, target: o});
+		      });
+
+		  // Transition links to their new position.
+		  link.transition()
+		      .duration(duration)
+		      .attr("d", diagonal);
+
+		  // Transition exiting nodes to the parent's new position.
+		  link.exit().transition()
+		      .duration(duration)
+		      .attr("d", function(d) {
+		        var o = {x: source.x, y: source.y};
+		        return diagonal({source: o, target: o});
+		      })
+		      .remove();
+
+		  // Stash the old positions for transition.
+		  nodes.forEach(function(d) {
+		    d.x0 = d.x;
+		    d.y0 = d.y;
+		  });
+		}
+
+		// Toggle children on click.
+		function click(d) {
+		  if (d.children) {
+		    d._children = d.children;
+		    d.children = null;
+		  } else {
+		    d.children = d._children;
+		    d._children = null;
+		  }
+		  update(d);
+		}
+	}
+</script>
+
+</head>
+<body>
+	
+	Wait for it...
+
+	<input class="btn btn-primary" type="button" name="submitForm" value="See Graph" onClick="showGraph(this.form)">
+
+</body>
+</html>
