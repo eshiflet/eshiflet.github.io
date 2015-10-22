@@ -3,6 +3,12 @@
  * Need to move this over to jQuery
  * ========================================================== */
 
+$('#nav').affix({
+    offset: {
+        top: $('#nav').offset().top
+    }
+});
+
 function TEST(){
 	$('FrameMap').replaceWith("<div>Hello world</div>")
 }
