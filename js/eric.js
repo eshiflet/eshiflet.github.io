@@ -9,6 +9,11 @@ $('#nav').affix({
     }
 });
 
+.affix {
+  top: 20px;
+  width: 213px;
+}
+
 function TEST(){
 	$('FrameMap').replaceWith("<div>Hello world</div>")
 }
