@@ -8,6 +8,29 @@
  * Designed and built with all the love in the world by @mdo and @fat.
  */
 
+/* Added for the CTD split pane book */
+
+@media (min-width: 768px){
+  #left {
+    position: absolute;
+    top: 0px;
+    bottom: 0;
+    left: 0;
+    width: 20%;
+    overflow-y: scroll; 
+  }
+  
+  #right {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    overflow-y: scroll;
+    width: 80%;
+  }
+}
+
+
 .clearfix {
   *zoom: 1;
 }
