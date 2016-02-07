@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Replacing the Run Start Capacitor on an Air Conditionar</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Le styles -->
+    <link href="../bootstrap-232/css/bootstrap.css" rel="stylesheet">
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+    </style>
+
+    <!-- Le fav and touch icons -->
+    <link rel="shortcut icon" href="../icons/favicon.ico">
+
+	<!-- Google Analytics -->
+	<script type="text/javascript">
+
+	  var _gaq = _gaq || [];
+	  _gaq.push(['_setAccount', 'UA-32244838-1']);
+	  _gaq.push(['_trackPageview']);
+
+	  (function() {
+	    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+	    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+	    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+	  })();
+
+	</script>
+
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <a class="brand" href="http://www.ericshiflet.com">EricShiflet.com</a>
+
+          <div class="nav-collapse">
+            <ul class="nav">
+              <li class="active"><a href="http://www.ericshiflet.com">Home</a></li>
+              <li><a href="#about">About</a></li>
+              <li><a href="../contact.html">Contact</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+
+      <h1>Replacing the Run Start Capacitor on an Air Conditionar</h1><br>
+      
+	  <p>My central air conditioner wasn't generating cold air after starting it up for the first time this summer.  I figured that being an electrical engineer, maybe I could figure out what's wrong with it before calling a repair person.  The unit would turn on and off when the thermostat indicated, so it wasn't a control problem.  Air was blowing out of the vents so the house fan was working fine.  The outdoor cooling fan was running, but after listening closely I could hear that the compressor never actually turned on.  After narrowing it down to the compressor I took off the outside unit's panel and luckily there was a schematic glued to the inside of the panel door.  How helpful.</p>
+	
+	  <img src="schematic.jpg">
+	  <p>
+
+	  <p>It's a really simple circuit and it seemed pretty clear that either the compressor was broken or the capacitor that starts the compressor was broken.  These are big capacitors and when they go bad you can usually see it just by looking.  Sure enough, the top of the capacitor was bent in a curve outwards.  That's an obvious sign it's bad.  The top of the capacitor should be as flat as (and the same basic shape of) a pancake.  If you look carefully at the picture below, you can tell the difference.  It's much easier to notice when you're holding it in your hand.  The bad capacitor is in the bottom left corner of the schematic, labeled CAPACITOR with the three leads COM, HERM and FAN.</p>
+	  
+	  <img src="caps.jpg">
+	  <p>
+		  
+	  <p>Now things got a little tricky.  This particular air conditioner combines two capacitors into one, what's called a run-start or start-run capacitor.  This combined capacitor is for starting the compressor motor and also running the outdoor fan.  You can buy a new drop-in replacement combined capacitor but it's relatively expensive, maybe $50.  I ended up getting two separate capacitors, one for running the fan motor and another for starting the compressor motor, and they cost about $5 for both.  The wiring is a little different than the schematic above, but straightforward to make the modification.  Just connect the common posts on the two capacitors together and make the same connections as the original combined capacitor.</p>
+	  
+	  <img src="schematic2.png">
+	  <p>
+		  	  
+	  <p>The guys at my <a href="http://boulderelectricmotorco.com">local electric motor repair shop</a> were really helpful in getting the right sized capacitor for the job (big thank-you!).  This is important because these capacitors take a heavy load at 240 VAC.  (BTW, I don't recommend doing this unless you're comfortable with big appliances and high voltage.  I opend the breaker, removed the fuses and checked with a voltmeter just to make sure power was off!)  The other trick was finding space within the outside unit's control box for the extra capacitor (one became two).  A few wire ties made it a simple job.  After about fifteen minutes rerouting and soldering wires, then securing the new capacitors with wire ties, the air conditioner was starting and running like new.  Hooray!  My guess is I saved a several hundred dollar repair with $5 of parts and about an hour of my time.  Plenty for a new pair of bike shoes.</p>
+
+	  <hr>
+      <footer>
+        <p>&copy; Eric Shiflet 2013</p>
+      </footer>
+
+    </div><!--/.fluid-container-->
+
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="../bootstrap-232/js/bootstrap.js"></script>
+
+  </body>
+</html>
