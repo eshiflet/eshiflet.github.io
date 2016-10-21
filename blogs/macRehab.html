@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Rehabilitating an Old iMac</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Le styles -->
+    <link href="../bootstrap-232/css/bootstrap.css" rel="stylesheet">
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+    </style>
+
+    <!-- Le fav and touch icons -->
+    <link rel="shortcut icon" href="../icons/favicon.ico">
+
+	<!-- Google Analytics -->
+	<script type="text/javascript">
+
+	  var _gaq = _gaq || [];
+	  _gaq.push(['_setAccount', 'UA-32244838-1']);
+	  _gaq.push(['_trackPageview']);
+
+	  (function() {
+	    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+	    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+	    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+	  })();
+
+	</script>
+
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <a class="brand" href="http://www.ericshiflet.com">EricShiflet.com</a>
+
+          <div class="nav-collapse">
+            <ul class="nav">
+              <li class="active"><a href="http://www.ericshiflet.com">Home</a></li>
+              <li><a href="#about">About</a></li>
+              <li><a href="../contact.html">Contact</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+
+      <h1>Rehabilitating and Old iMac</h1><br>
+      
+	  <p>I have a late 2007 24" iMac computer that I really like.  The monitor is nice (this side of the new 4k monitors), the software is reasonably stable and none of the hardware components have broken in nine years.  However, upgrading the OS over the years has brought the machine to an intolerable slowness.  So, it’s worth a little time and effort to see if I can make it useful again.</p>
+
+	  <p>I happen to have a 256GB flash drive that’s not being used, so the first step was replacing the original 360GB 7200 RPM hard drive.  I followed <a href="https://www.ifixit.com/Guide/iMac+Intel+24-Inch+EMC+2134+and+2211+Hard+Drive+Replacement/8968">this guide</a> to swap drives and it was perfect, do everything exactly as it says.  The only unmentioned part was that the inside of the computer is going to be very dusty so plan on using a minivac or wet wipes to clean things up.  Don’t let the dust get anywhere near the LCD panel or glass cover, in fact just put those in a different room after you remove them from the computer chassis.</p>
+
+	  <p>To install the OS on the new flash drive I booted the computer with my original OS X 10.5 Leopard CD that came with the iMac.  Between the older OS (smaller and faster) and the flash drive, this machine was screaming fast again.  Starting apps and getting folder sizes was practically instantaneous.  Boot up and shut down times were about one, maybe two, seconds.  Woot!  Unfortunately, some of the programs I want to run require at least OS X 10.9 Mavericks, specifically the GitHub client and Garmin GPS watch software, so staying on 10.5 was not an option.</p>
+
+	  <p>Since I changed two variables at once, new flash drive and old OS, I didn’t know how much each was contributing to the faster machine.  An interesting experiment would be to create multiple bootable partitions with different OS X versions to compare and decide which was the best tradeoff between function and performance.  OS X has dual boot built-in, so all you have to do is hold down the option key while the iMac is booting and then select the bootable partition you want to use.</p>
+
+	  <p>First I upgraded the original boot partition’s OS to OS X 10.6.8, the last version of Snow Leopard, because Snow Leopard is basically a smaller, more optimized and faster version of OS X 10.5 Leopard.  Next I created two additional partitions, for three total on the drive.  My intention is to install 10.9 Mavericks on one partition and 10.11 El Capitan on the other.  What’s the rationale?  I can keep OS X 10.6.8 on a really small partition as a living benchmark of how fast this iMac should be, and maybe run a few programs that are still compatible with that OS version.  OS X 10.9 is the oldest version that supports the programs I want to run, so I want to see if this is also a fast configuration with the theory that it is optimized for the oldest hardware with least bloat.  My guess is that this will be the OS X version/partition that I use the most.  The third partition is for the latest-and-greatest OS X version that Apple offers.  This will be my control for the performance impact of the flash drive on the version of OS X that I have been running.</p>
+
+	  <p>One step that has been difficult to complete is upgrading OS X 10.6.8 to OS X 10.9 Mavericks.  Apple really wants users to go all the way to OS X 10.11 El Capitan, the latest version, to it’s hard to get your hands on Mavericks if you don’t already have it. <a href="https://discussions.apple.com/thread/6612325?tstart=0">This thread</a> was the best I’ve found describing the problem and a few possible solutions.  Since I went from Lion directly to Yosemite, I don’t have access to Mavericks in my Apple app store downloads.  I’m going to ask around to see if any friends or co-workers have an image I can make a copy of.  Apple was giving Mavericks away for free to owners of old OS X versions, so I don’t think there’s any license problems.</p>
+
+	  <hr>
+      <footer>
+        <p>&copy; Eric Shiflet 2016</p>
+      </footer>
+
+    </div><!--/.fluid-container-->
+
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="../bootstrap-232/js/bootstrap.js"></script>
+
+  </body>
+</html>
