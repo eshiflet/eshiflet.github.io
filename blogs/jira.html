@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Using the Jira REST API with Google Sheets</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Le styles -->
+    <link href="../bootstrap-232/css/bootstrap.css" rel="stylesheet">
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+    </style>
+
+    <!-- Le fav and touch icons -->
+    <link rel="shortcut icon" href="../icons/favicon.ico">
+
+	<!-- Google Analytics -->
+	<script type="text/javascript">
+
+	  var _gaq = _gaq || [];
+	  _gaq.push(['_setAccount', 'UA-32244838-1']);
+	  _gaq.push(['_trackPageview']);
+
+	  (function() {
+	    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+	    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+	    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+	  })();
+
+	</script>
+
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <a class="brand" href="http://www.ericshiflet.com">EricShiflet.com</a>
+
+          <div class="nav-collapse">
+            <ul class="nav">
+              <li class="active"><a href="http://www.ericshiflet.com">Home</a></li>
+              <li><a href="#about">About</a></li>
+              <li><a href="../contact.html">Contact</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+
+      <h1>Using Google Sheets to access the Jira REST API</h1><br>
+      
+	  <p>I started using Atlassian's Jira a couple years ago after working with Rally for several years before that. There's a lot of data that both tools store in their database that is only accessible through the REST API, not through the web application. If you want to use this data, it's certainly possible to write your own application. Though sometimes you just want a quick way to get the data out and run a few operations on it like aggregation, averaging and comparing. Spreadsheets are perfect for this type of work, but how do you get the data out of Jira and into a spreadsheet?</p>
+<br>
+
+	  <p>There are many ways in both Jira and Rally to search for the data you want, export it to an excel format file, then import it into a spreadsheet. This is a bit cumbersome and it doesn't automatically update, so it would be nice to automate the process. It turns out that Google Sheets supports running scripts, and one already exists for importing data from a generic REST API. It's called <a href="https://gist.github.com/paulgambill/cacd19da95a1421d3164">ImportJSON.gs and is available on GitHub here</a>. And here's <a href="https://medium.com/@paulgambill/how-to-import-json-data-into-google-spreadsheets-in-less-than-5-minutes-a3fede1a014a">how to use it</a>, from the same author.</p>
+<br>
+
+	  <p>Caveat emptor, there's one trick necessary to make this work with Jira: authentication. Obviously, Atlassian wants to make sure you really have the right to access the data this Google Sheet is going to get through the Jira REST API. We'll be securely passing your base64 encoded user credentials using Basic Auth by extending the script referened above. Unfortunately, I haven't figured out a way to do this other than storing your base64 encoded credentials in the Google Sheet. This isn't great because if you share the Google Sheet with anyone, or your Google account gets hacked, your credentials can be used or decoded into your Jira username and password.</p>
+<br>
+
+	  <p>So how do you do this? Follow these steps.</p>
+<br>
+	  
+	  <ol type="1">
+		  <li>Create your Google Sheet</li>
+		  <li>Follow the steps at <a href="https://medium.com/@paulgambill/how-to-import-json-data-into-google-spreadsheets-in-less-than-5-minutes-a3fede1a014a">the URL above</a> to copy and paste the script into your Google Sheet</li>
+		  <li>Modify the <code>ImportJSON</code> function interface in the script to include passing your base64 encoded credentials, near line 90:
+			  
+<pre><code>function ImportJSON(url, query, options, base64pw) {
+  return ImportJSONAdvanced(url, query, options, base64pw, includeXPath_, defaultTransform_);
+}</code></pre>
+		  </li>
+		  <li>Modify the <code>ImportJSONAdvanced</code> function to make the Jira REST API call using the <code>base64pw</code> parameter for Basic Auth in the Header, near line 130:
+			  
+<pre><code>function ImportJSONAdvanced(url, query, options, base64pw, includeFunc, transformFunc) {
+
+  // adding options to the API call, including headers and basic authorization
+  var urlCallHeaders = {
+    'Authorization': 'Basic '.concat(base64pw)
+  };
+
+  var urlCallOptions = {
+    'headers': urlCallHeaders
+  };
+
+  var jsondata = UrlFetchApp.fetch(url, urlCallOptions);
+  var object   = JSON.parse(jsondata.getContentText());
+  
+  return parseJSONObject_(object, query, options, includeFunc, transformFunc);
+}</code></pre>
+		  </li>
+		  <li>Calculate your base 64 encoded username:password from a site such as <a href="https://www.base64encode.org/">this one</a>. Make sure you encode your full username and password joined with a colon. The result should look something like <code>ZABjq4mYl4IqYISeh48ebq5jw301RPfia4VsUze=</code>.</li>
+		  <li>Set up the Google Sheet with the four parameters such as this:</li>
+		  <table class="table table-bordered">
+			  <tr>
+				  <td></td>
+				  <td>A</td>
+				  <td>B</td>
+			  </tr>
+			  <tr>
+				  <td>1</td>
+				  <td>URL</td>
+				  <td>https://formationds.atlassian.net/rest/api/2/issue/FS-2345</td>
+			  </tr>
+			  <tr>
+				  <td>2</td>
+				  <td>Return Filter</td>
+				  <td>/key</td>
+			  </tr>
+			  <tr>
+				  <td>3</td>
+				  <td>Options</td>
+				  <td>noInherit, noTruncate</td>
+			  </tr>
+			  <tr>
+				  <td>4</td>
+				  <td>Base64 auth</td>
+				  <td>ZABjq4mYl4IqYISeh48ebq5jw301RPfia4VsUze=</td>
+			  </tr>
+		  </table>
+		  <li>Call the ImportJSON function by entering this in a cell <code>=ImportJSON(URL, return filter, options, optional base64 pw)</code> where each of the four parameters is the cell where its value is defined.  In the table above, it would be: <code>=ImportJSON(B1, B2, B3, B4)</code></li>
+	  </ol>
+<br>
+
+	  <p>Well, that's a lot of fun, but what can you do with it? The real power lies in the URL, the Return Filter, and the script's ability to return multiple values if there are multiple matches for the Return Filter. For example, the URL in the table above will return the JSON representation for the issue FS-2345, and the <code>/key</code> Return Filter will extract only the key value, which is FS-2345. Not too interesting. To get Story Points, which is a little more interesting, change the Return Filter to <code>/fields/customfield_10004</code>. For whatever reason, Atlassian decided that Story Points are a custom field and it's value (at least in my Jira instance) is 10004. (If you want to get all the custom field values, use this endpoint: <code>https://formationds.atlassian.net/rest/api/2/field</code>).</p>
+<br>
+
+	  <p>Now let's do something you truly can't do within the Jira application: Aggregate the number of Story Points for a search query that returns multiple issues. First, construct the URL. To search for all the Stories that were completed in a particular Sprint, construct a URL similar to this: <code>https://formationds.atlassian.net/rest/api/2/search?maxResults=300&jql=status in (done%2C verified) AND type %3D Story AND sprint %3D 165</code>. The criteria are that the Sprint is ID number 165 (I'm assuming that if you're savvy enough to get this far, you understand how to <a href="https://answers.atlassian.com/questions/66505/jira-how-can-i-find-out-the-sprint-id-of-a-particular-sprint">get the index of a sprint in Jira</a>), only Stories, and a Story is complete if it is in the Done or Verified state. (Obviously, you can make this even more useful by filtering for criteria such as Epic parent or specific scrum team.)</p>
+<br>
+
+	  <p>If everything is working correctly, Jira returns a JSON list of all the Stories completed in Sprint 165. However, the Return Filter must be modified because the JSON data returned is a list, not a single element. Change the Return Filter to <code>/issues/fields/customfield_10004</code>. The great thing about the ImportJSON script is that it will iterate on all elements in the list! Under the Google Sheet cell holding the call to ImportJSON, it should now list the Story Point value for every issue in the list. Something like this:</p>
+<br>
+
+		  <table class="table table-bordered">
+			  <tr>
+				  <td>Issues Fields Customfield 10004</td>
+			  </tr>
+			  <tr>
+				  <td>1</td>
+			  </tr>
+			  <tr>
+				  <td>0.5</td>
+			  </tr>
+			  <tr>
+				  <td>3</td>
+			  </tr>
+			  <tr>
+				  <td>2</td>
+			  </tr>
+			  <tr>
+				  <td>etc.</td>
+			  </tr>
+		  </table>
+		  
+	  <p>Within the spreadsheet you can now implement any arithmetic or other function you would normally use, such as summation, averaging or graphing. This is great because it's significantly more powerful and flexible than what you can do in the Jira web app, and it's better than simply exporting the static data from Jira because it will automatically update every time you load the spreadsheet.</p>
+
+	  <hr>
+      <footer>
+        <p>&copy; Eric Shiflet 2016</p>
+      </footer>
+
+    </div><!--/.fluid-container-->
+
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="../bootstrap-232/js/bootstrap.js"></script>
+
+  </body>
+</html>
