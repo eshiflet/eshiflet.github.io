@@ -15,11 +15,16 @@ $('#nav').affix({
 }
 
 function TEST(){
-	$('FrameMap').replaceWith("<div>Hello world</div>")
+	FrameMap.replaceWith("<div>Hello world</div>");
 }
+function TEST2(){
+	alert('event has been triggered');
+}
+
 function changeMapTillamookToP(){
 	document.getElementById('FrameMap').innerHTML = '<h2>Tillamook to Portland</h2><p>84 miles, 3244 feet vertical, 6 hours 3 minutes</p><iframe width="800" height="500" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="http://maps.google.com/maps?f=d&amp;source=s_d&amp;saddr=US-101+S%2FOregon+Coast+Hwy&amp;daddr=45.5309331,-122.82643+to:45.5241341,-122.704969+to:45.5151211,-122.696596+to:SW+Montgomery+St&amp;hl=en&amp;geocode=Fa5CtwId5t6c-A%3BFTW_tgIdQtGt-Ckztj5GLQ-VVDFqsJDeObW62Q%3BFaaktgIdt6uv-Cnfaode8wmVVDEJ7k6BySDWhA%3BFXGBtgIdbMyv-CmbhP9vIgqVVDGo1bJfNMaVIQ%3BFUZ-tgIdyt2v-A&amp;aq=0&amp;oq=portlan&amp;sll=45.559256,-123.931274&amp;sspn=0.09988,0.177841&amp;t=m&amp;mra=dme&amp;mrsp=0&amp;sz=13&amp;via=1,2,3&amp;ie=UTF8&amp;ll=45.384948,-123.134766&amp;spn=0.964518,2.194519&amp;z=9&amp;output=embed"></iframe><br /><small><a href="http://maps.google.com/maps?f=d&amp;source=embed&amp;saddr=US-101+S%2FOregon+Coast+Hwy&amp;daddr=45.5309331,-122.82643+to:45.5241341,-122.704969+to:45.5151211,-122.696596+to:SW+Montgomery+St&amp;hl=en&amp;geocode=Fa5CtwId5t6c-A%3BFTW_tgIdQtGt-Ckztj5GLQ-VVDFqsJDeObW62Q%3BFaaktgIdt6uv-Cnfaode8wmVVDEJ7k6BySDWhA%3BFXGBtgIdbMyv-CmbhP9vIgqVVDGo1bJfNMaVIQ%3BFUZ-tgIdyt2v-A&amp;aq=0&amp;oq=portlan&amp;sll=45.559256,-123.931274&amp;sspn=0.09988,0.177841&amp;t=m&amp;mra=dme&amp;mrsp=0&amp;sz=13&amp;via=1,2,3&amp;ie=UTF8&amp;ll=45.384948,-123.134766&amp;spn=0.964518,2.194519&amp;z=9" style="color:#0000FF;text-align:left">View Larger Map</a></small>';
 }
+
 function changeMapPortlandToG(){
 	document.getElementById('FrameMap').innerHTML = '<h2>Portland to Government Camp</h2><p>63 miles, 4632 feet vertical, 6 hours 39 minutes</p><iframe width="800" height="500" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="http://maps.google.com/maps?f=q&amp;source=s_q&amp;hl=en&amp;geocode=FfyhtgIdERyw-CkndKl9CwuVVDGRhdH25rk2HA%3BFa1BswIdGDy--CmBYcutpBi-VDEDAfuxv4MJ2w&amp;q=Portland,+OR+to+Government+Camp,+OR&amp;aq=0&amp;oq=portland,+or+to+govern&amp;sll=37.0625,-95.677068&amp;sspn=64.36916,91.845703&amp;ie=UTF8&amp;ll=45.42478,-122.21399&amp;spn=0.24524,0.92696&amp;t=m&amp;saddr=Portland,+OR&amp;daddr=Government+Camp,+OR&amp;output=embed"></iframe><br /><small><a href="http://maps.google.com/maps?f=q&amp;source=embed&amp;hl=en&amp;geocode=FfyhtgIdERyw-CkndKl9CwuVVDGRhdH25rk2HA%3BFa1BswIdGDy--CmBYcutpBi-VDEDAfuxv4MJ2w&amp;q=Portland,+OR+to+Government+Camp,+OR&amp;aq=0&amp;oq=portland,+or+to+govern&amp;sll=37.0625,-95.677068&amp;sspn=64.36916,91.845703&amp;ie=UTF8&amp;ll=45.42478,-122.21399&amp;spn=0.24524,0.92696&amp;t=m&amp;saddr=Portland,+OR&amp;daddr=Government+Camp,+OR" style="color:#0000FF;text-align:left">View Larger Map</a></small>';
 }
