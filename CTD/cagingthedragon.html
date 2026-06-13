@@ -8,24 +8,39 @@
     <meta name="author" content="James Carothers">
 
     <!-- Styles -->
-    <link href="../bootstrap-232/css/bootstrap.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style type="text/css">
       body {
-		  padding-top: 60px;
-		  padding-bottom: 40px;
+        padding-top: 70px;
+        padding-bottom: 40px;
       }
-      .sidebar-nav {
-		  padding: 9px 0;
+      .tab {
+        text-indent: 40px;
       }
-	  .tab {
-		  text-indent: 40px;
-	  }
-	  .indent {
-		  margin-left: 40px;
-	  }
+      .indent {
+        margin-left: 40px;
+      }
+      .hero-unit {
+        padding: 3rem;
+        margin-bottom: 1.5rem;
+        background-color: #eee;
+        border-radius: 0.5rem;
+      }
+      .toc-sidebar {
+        position: sticky;
+        top: 80px;
+        max-height: calc(100vh - 90px);
+        overflow-y: auto;
+      }
+      .toc-sidebar .nav-link {
+        padding: 0.25rem 0.75rem;
+        font-size: 0.9rem;
+      }
+      .toc-sidebar .nav-link.active {
+        background-color: #0d6efd;
+        color: #fff;
+      }
     </style>
-
-	<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
 
     <!-- Favorite and touch icons -->
     <link rel="shortcut icon" href="../icons/favicon.ico">
@@ -45,69 +60,64 @@
 
   </head>
 
-  <body>
+  <body data-bs-spy="scroll" data-bs-target="#toc-nav" data-bs-offset="80" tabindex="0">
 
-    <div class="navbar navbar-inverse navbar-fixed-top">
-      <div class="navbar-inner">
-        <div class="container">
-          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </a>
-          <a class="brand" href="http://www.ericshiflet.com">EricShiflet.com</a>
-          <div class="nav-collapse">
-            <ul class="nav">
-              <li class="active"><a href="http://www.ericshiflet.com">Home</a></li>
-              <li><a href="#about">About</a></li>
-              <li><a href="contact.html">Contact</a></li>
-            </ul>
-          </div><!-- /.nav-collapse -->
-        </div><!-- /container -->
-      </div><!-- /navbar-inner -->
-    </div><!-- /navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+      <div class="container">
+        <a class="navbar-brand" href="http://www.ericshiflet.com">EricShiflet.com</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav">
+            <li class="nav-item"><a class="nav-link active" aria-current="page" href="http://www.ericshiflet.com">Home</a></li>
+            <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
+            <li class="nav-item"><a class="nav-link" href="../contact.html">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
 
     <div class="container-fluid">
-      <div class="row-fluid">
-	  
-        <div class="span3" id="left">
-            <ul id="nav" class="nav nav-list">
-            	<hr>
-					<li class="nav-header">Caging the Dragon, by James Carothers</li>
-					<li class=""> <a href="#note"><i class="icon-chevron-right"></i> Publisher's Note</a></li>
-					<li class=""> <a href="#reading"><i class="icon-chevron-right"></i> Further Reading</a></li>
-					<li class=""> <a href="#preface"><i class="icon-chevron-right"></i> Preface</a></li>
-					<li class=""> <a href="#intro"><i class="icon-chevron-right"></i> Introduction</a></li>
-					<li class=""> <a href="#ch1"> <i class="icon-chevron-right"></i> 1: The Origins of Containment</a></li>
-					<li class=""> <a href="#ch2"> <i class="icon-chevron-right"></i> 2: The Rainier Event</a></li>
-					<li class=""> <a href="#ch3"> <i class="icon-chevron-right"></i> 3: The Moratorium and the Return to Testing</a></li>
-					<li class=""> <a href="#ch4"> <i class="icon-chevron-right"></i> 4: The Beginnings of Containment Programs</a></li>
-					<li class=""> <a href="#ch5"> <i class="icon-chevron-right"></i> 5: The Nevada Test Site</a></li>
-					<li class=""> <a href="#ch6"> <i class="icon-chevron-right"></i> 6: Earth Materials and Their Properties</a></li>
-					<li class=""> <a href="#ch7"> <i class="icon-chevron-right"></i> 7: Logging and Logging Tools</a></li>
-					<li class=""> <a href="#ch8"> <i class="icon-chevron-right"></i> 8: Energy Coupling and Partition</a></li>
-					<li class=""> <a href="#ch9"> <i class="icon-chevron-right"></i> 9: Cavities and How They Grow</a></li>
-					<li class=""> <a href="#ch10"><i class="icon-chevron-right"></i> 10: Cavity Collapse, Chimneys and Craters</a></li>
-					<li class=""> <a href="#ch11"><i class="icon-chevron-right"></i> 11: The Residual Stress Cage</a></li>
-					<li class=""> <a href="#ch12"><i class="icon-chevron-right"></i> 12: Hydrofractures</a></li>
-					<li class=""> <a href="#ch13"><i class="icon-chevron-right"></i> 13: Block Motion</a></li>
-					<li class=""> <a href="#ch14"><i class="icon-chevron-right"></i> 14: Depths of Burial, Drilling</a></li>
-					<li class=""> <a href="#ch15"><i class="icon-chevron-right"></i> 15: Emplacement Holes, Stemming, Plugs, and Cable Blocks</a></li>
-					<li class=""> <a href="#ch16"><i class="icon-chevron-right"></i> 16: Tunnels and Line-of-Sight Pipes</a></li>
-					<li class=""> <a href="#ch17"><i class="icon-chevron-right"></i> 17: Pipe Closure Hardware</a></li>
-					<li class=""> <a href="#ch18"><i class="icon-chevron-right"></i> 18: Pipe Flow</a></li>
-					<li class=""> <a href="#ch19"><i class="icon-chevron-right"></i> 19: Codes and Calculations</a></li>
-					<li class=""> <a href="#ch20"><i class="icon-chevron-right"></i> 20: Current Practice</a></li>
-					<li class=""> <a href="#ch21"><i class="icon-chevron-right"></i> 21: Sometimes the Dragon Wins</a></li>
-					<li class=""> <a href="#ch22"><i class="icon-chevron-right"></i> 22: About the Containment Evaluation Panel</a></li>
-					<li class=""> <a href="#ch23"><i class="icon-chevron-right"></i> 23: Thoughts, Opinions, Concerns</a></li>
-					<li class=""> <a href="#appendix"><i class="icon-chevron-right"></i> Appendix</a></li>
-				<hr>
+      <div class="row">
+
+        <nav class="col-md-3" id="toc-nav">
+          <div class="toc-sidebar">
+            <h6 class="px-2 mt-3 mb-2 text-uppercase text-muted">Caging the Dragon, by James Carothers</h6>
+            <ul class="nav nav-pills flex-column">
+              <li class="nav-item"><a class="nav-link" href="#note">Publisher's Note</a></li>
+              <li class="nav-item"><a class="nav-link" href="#reading">Further Reading</a></li>
+              <li class="nav-item"><a class="nav-link" href="#preface">Preface</a></li>
+              <li class="nav-item"><a class="nav-link" href="#intro">Introduction</a></li>
+              <li class="nav-item"><a class="nav-link" href="#ch1">1: The Origins of Containment</a></li>
+              <li class="nav-item"><a class="nav-link" href="#ch2">2: The Rainier Event</a></li>
+              <li class="nav-item"><a class="nav-link" href="#ch3">3: The Moratorium and the Return to Testing</a></li>
+              <li class="nav-item"><a class="nav-link" href="#ch4">4: The Beginnings of Containment Programs</a></li>
+              <li class="nav-item"><a class="nav-link" href="#ch5">5: The Nevada Test Site</a></li>
+              <li class="nav-item"><a class="nav-link" href="#ch6">6: Earth Materials and Their Properties</a></li>
+              <li class="nav-item"><a class="nav-link" href="#ch7">7: Logging and Logging Tools</a></li>
+              <li class="nav-item"><a class="nav-link" href="#ch8">8: Energy Coupling and Partition</a></li>
+              <li class="nav-item"><a class="nav-link" href="#ch9">9: Cavities and How They Grow</a></li>
+              <li class="nav-item"><a class="nav-link" href="#ch10">10: Cavity Collapse, Chimneys and Craters</a></li>
+              <li class="nav-item"><a class="nav-link" href="#ch11">11: The Residual Stress Cage</a></li>
+              <li class="nav-item"><a class="nav-link" href="#ch12">12: Hydrofractures</a></li>
+              <li class="nav-item"><a class="nav-link" href="#ch13">13: Block Motion</a></li>
+              <li class="nav-item"><a class="nav-link" href="#ch14">14: Depths of Burial, Drilling</a></li>
+              <li class="nav-item"><a class="nav-link" href="#ch15">15: Emplacement Holes, Stemming, Plugs, and Cable Blocks</a></li>
+              <li class="nav-item"><a class="nav-link" href="#ch16">16: Tunnels and Line-of-Sight Pipes</a></li>
+              <li class="nav-item"><a class="nav-link" href="#ch17">17: Pipe Closure Hardware</a></li>
+              <li class="nav-item"><a class="nav-link" href="#ch18">18: Pipe Flow</a></li>
+              <li class="nav-item"><a class="nav-link" href="#ch19">19: Codes and Calculations</a></li>
+              <li class="nav-item"><a class="nav-link" href="#ch20">20: Current Practice</a></li>
+              <li class="nav-item"><a class="nav-link" href="#ch21">21: Sometimes the Dragon Wins</a></li>
+              <li class="nav-item"><a class="nav-link" href="#ch22">22: About the Containment Evaluation Panel</a></li>
+              <li class="nav-item"><a class="nav-link" href="#ch23">23: Thoughts, Opinions, Concerns</a></li>
+              <li class="nav-item"><a class="nav-link" href="#appendix">Appendix</a></li>
             </ul>
-        </div><!--/span3 -->
-		
-		
-        <div class="span9" id="right">
+          </div>
+        </nav>
+
+        <div class="col-md-9" id="right">
            <div class="hero-unit">
 
 <br><br>
@@ -115,7 +125,7 @@
 <h2>The Containment of Underground Nuclear Explosions</h2>
 <h2>by James Carothers</h2>
 
-<a name="note"></a>
+<a id="note" name="note"></a>
 <br><br>
 <h2>Publisher's Note</h2>
 <br>
@@ -161,7 +171,7 @@ I'll update this on-line document.</p>
 <br>
 
 
-<a name="reading"></a>
+<a id="reading" name="reading"></a>
 <br><br>
 <h2>Further Reading</h2>
 <br>
@@ -175,7 +185,7 @@ I'll update this on-line document.</p>
 <li>Bulletin of the Atomic Scientists (Doomsday Clock)</li>
 </ul>
 
-<a name="preface"></a>
+<a id="preface" name="preface"></a>
 <br><br>
 <h2>Preface</h2>
 <br>
@@ -301,7 +311,7 @@ the chapters and format the text. He deserves my thanks for helping in a very
 substantial way on this project.</p>
 
 
-<a name="intro"></a>
+<a id="intro" name="intro"></a>
 <br><br>
 <h2>Introduction</h2>
 <br>
@@ -345,7 +355,7 @@ the necessary data from it, and simultaneously "successfully contain" the radioa
 Such a situation may never arise; if it does perhaps the words here may be helpful.</p>
 
 
-<a name="ch1"></a>
+<a id="ch1" name="ch1"></a>
 <br><br>
 <h2>Chapter 1: The Origins of Containment</h2>
 <br>
@@ -1516,7 +1526,7 @@ ahead and fired one more shot anyway, after the beginning of the moratorium.
 They weren't as picky about those things as we were.</p>
 
 
-<a name="ch2"></a>
+<a id="ch2" name="ch2"></a>
 <br><br>
 <h2>Chapter 2: The Rainier Event</h2>
 <br>
@@ -2675,7 +2685,7 @@ out, and the volume being interacted with was considerably larger than that
 which we found when we calculated the steam pressure, and calculated 50, or 55,
 W to the l/3rd as the cavity radius.</p>
 
-<a name="ch3"></a>
+<a id="ch3" name="ch3"></a>
 <br><br>
 <h2>Chapter 3: The Moratorium and the Return to Testing</h2>
 <br>
@@ -3716,7 +3726,7 @@ in the field doing the engineering and drilling. I remember that as being profou
 We said, "This will never happen again."</p>
 
 
-<a name="ch4"></a>
+<a id="ch4" name="ch4"></a>
 <br><br>
 <h2>Chapter 4: The Beginnings of Containment Programs</h2>
 <br>
@@ -4737,7 +4747,7 @@ contractors agreed with me. Was it because I had control of the money, or was
 it because they thought I was correct? And I was never sure.</p>
 
 
-<a name="ch5"></a>
+<a id="ch5" name="ch5"></a>
 <br><br>
 <h2>Chapter 5: The Nevada Test Site</h2>
 <br>
@@ -6141,7 +6151,7 @@ enhancement might be, and we don't know that.</p>
 
 <br>
 
-<a name="ch6"></a>
+<a id="ch6" name="ch6"></a>
 <br><br>
 <h2>Chapter 6: Earth Materials and Their Properties</h2>
 <br>
@@ -7460,7 +7470,7 @@ those Los Alamos events, and I remember the highest yield event I had was Halfbe
 and the lowest yield was Solendon.</p>
 
 
-<a name="ch7"></a>
+<a id="ch7" name="ch7"></a>
 <br><br>
 <h2>Chapter 7: Logging and Logging Tools</h2>
 <br>
@@ -8546,7 +8556,7 @@ of these methods together to infer a strength. But since strength makes a great
 deal of difference in a calculation, it's important to get it.</p>
 
 
-<a name="ch8"></a>
+<a id="ch8" name="ch8"></a>
 <br><br>
 <h2>Chapter 8: Energy Coupling and Partition</h2>
 <br>
@@ -9378,7 +9388,7 @@ per kt to the one-third you can really see a pretty good effect from that, on
 the ground motion. At least that's what the calculations tend to show .</p>
 
 
-<a name="ch9"></a>
+<a id="ch9" name="ch9"></a>
 <br><br>
 <h2>Chapter 9: Cavities and How They Grow</h2>
 <br>
@@ -10854,7 +10864,7 @@ reproducible virii came from clay. That is, they were organic molecules that
 got the pattern, and replicated off a piece of clay.</p>
 
 
-<a name="ch10"></a>
+<a id="ch10" name="ch10"></a>
 <br><br>
 <h2>Chapter 10: Cavity Collapse, Chimneys and Craters</h2>
 <br>
@@ -11918,7 +11928,7 @@ success there.
 </p>
 
 
-<a name="ch11"></a>
+<a id="ch11" name="ch11"></a>
 <br><br>
 <h2>Chapter 11: The Residual Stress Cage</h2>
 <br>
@@ -13239,7 +13249,7 @@ stress field. The fact that the alluvium is very weak doesn't matter that much
 because the water table is below it, so it's dry, and there is a lot of volume
 to take up the gases, even if it doesn't form much of a residual stress cage.</p>
 
-<a name="ch12"></a>
+<a id="ch12" name="ch12"></a>
 <br><br>
 <h2>Chapter 12: Hydrofractures</h2>
 <br>
@@ -14067,7 +14077,7 @@ or a whole nest of these things. There will be one or two, or maybe three, on a
 reentry that are potentially bothersome when you get in close enough.</p>
 
 
-<a name="ch13"></a>
+<a id="ch13" name="ch13"></a>
 <br><br>
 <h2>Chapter 13: Block Motion</h2>
 <br>
@@ -14720,7 +14730,7 @@ important. In terms of release to the atmosphere, I don't think it is a containm
 issue at all.</p>
 
 
-<a name="ch14"></a>
+<a id="ch14" name="ch14"></a>
 <br><br>
 <h2>Chapter 14: Depths of Burial, Drilling</h2>
 <br>
@@ -15747,7 +15757,7 @@ drilling was just like a discovered America for post-shot drillers. It was that
 kind of a step forward.</p>
 
 
-<a name="ch15"></a>
+<a id="ch15" name="ch15"></a>
 <br><br>
 <h2>Chapter 15: Emplacement Holes, Stemming, Plugs, and Cable Blocks</h2>
 <br>
@@ -16823,7 +16833,7 @@ each are less expensive than parts of the other. Why not develop a compromise
 which is as good as either one, and costs less than either?</p>
 
 
-<a name="ch16"></a>
+<a id="ch16" name="ch16"></a>
 <br><br>
 <h2>Chapter 16: Tunnels and Line-of-Sight Pipes</h2>
 <br>
@@ -18144,7 +18154,7 @@ program has been driven by experiment protection and equipment protection, and
 also trying to preserve the tunnel complex, because that's a valuable resource.</p>
 
 
-<a name="ch17"></a>
+<a id="ch17" name="ch17"></a>
 <br><br>
 <h2>Chapter 17: Pipe Closure Hardware</h2>
 <br>
@@ -18605,7 +18615,7 @@ from having propellant drive. The laboratories were closed, for ES&amp;H
 purposes, or that work would have been done.</p>
 
 
-<a name="ch18"></a>
+<a id="ch18" name="ch18"></a>
 <br><br>
 <h2>Chapter 18: Pipe Flow</h2>
 <br>
@@ -19784,7 +19794,7 @@ rock-matching grout length back to what it was on Dining Car, and a super lean
 grout length back to Dining Car too. Well, obviously that wasn't the answer.</p>
 
 
-<a name="ch19"></a>
+<a id="ch19" name="ch19"></a>
 <br><br>
 <h2>Chapter 19: Codes and Calculations</h2>
 <br>
@@ -20924,7 +20934,7 @@ think we came very close on Barnwell, and the calculations certainly pointed in
 that direction.</p>
 
 
-<a name="ch20"></a>
+<a id="ch20" name="ch20"></a>
 <br><br>
 <h2>Chapter 20: Current Practice</h2>
 <br>
@@ -21922,7 +21932,7 @@ better if what you're doing is all right. We said, "We can do it
 better," but that didn't matter.</p>
 
 
-<a name="ch21"></a>
+<a id="ch21" name="ch21"></a>
 <br><br>
 <h2>Chapter 21: Sometimes the Dragon Wins</h2>
 <br>
@@ -22809,7 +22819,7 @@ unsuccessful in finding something that we can point to and say, “It's because
 of this that Mighty Oak did what it did."</p>
 
 
-<a name="ch22"></a>
+<a id="ch22" name="ch22"></a>
 <br><br>
 <h2>Chapter 22: About the Containment Evaluation Panel</h2>
 <br>
@@ -23508,7 +23518,7 @@ it in descriptive terms, so you can communicate with people back here, so we
 all understand it.</p>
 
 
-<a name="ch23"></a>
+<a id="ch23" name="ch23"></a>
 <br><br>
 <h2>Chapter 23: Thoughts, Opinions, Concerns</h2>
 <br>
@@ -24371,7 +24381,7 @@ perhaps make a suitable summary and ending for this book:</p>
 is, we still don't really understand containment very well.</i></p>
 
 
-<a name="appendix"></a>
+<a id="appendix" name="appendix"></a>
 <br><br>
 <h2>Appendix</h2>
 <br>
@@ -26899,22 +26909,20 @@ with the Laboratory people. It was a way to really learn about the program. It
 was a tremendous experience.</p>
 
               </div><!--/hero-unit -->
-        </div><!--/span9 -->
+        </div><!--/col-md-9 -->
 
-      </div><!-- /.row-fluid -->
+      </div><!-- /.row -->
 	</div><!-- /container-fluid -->
 
 <!--
     <div class="row">
       <hr>
       <footer>
-        <p>&copy; Eric Shiflet 2015</p>
       </footer>
     </div><!-- /row -->
 
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="../bootstrap-232/js/bootstrap.js"></script>
-    <script src="../js/eric.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   </body>
 </html>
