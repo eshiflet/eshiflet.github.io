@@ -79,6 +79,15 @@ button:active{transform:scale(0.98)}
 .elev-label{position:absolute;font-size:10px;color:#999;font-family:'Menlo','Consolas','Monaco',monospace;pointer-events:none;background:rgba(255,255,255,0.7);padding:0 4px;border-radius:3px}
 .elev-max{top:2px;left:4px}
 .elev-min{bottom:2px;left:4px}
+.axis-row{grid-column:1/-1;display:flex;justify-content:space-between;font-size:10px;color:#999;font-family:'Menlo','Consolas','Monaco',monospace;margin:2px 0 8px}
+.axis-row span{white-space:nowrap}
+.axis-row span:first-child{text-align:left}
+.axis-row span:last-child{text-align:right}
+.zone-buttons{grid-column:1/-1;display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 8px}
+.zone-btn{font-family:'Menlo','Consolas','Monaco',monospace;font-size:11px;padding:2px 8px;cursor:pointer;border:0.5px solid #ccc;border-radius:5px;background:transparent;color:#666}
+.zone-btn:hover{background:#f1efe8}
+.zone-btn.active{background:#2563eb;color:#fff;border-color:#2563eb}
+.zone-info{font-size:10px;color:#999;font-family:'Menlo','Consolas','Monaco',monospace;margin-left:auto}
 
 @media (prefers-color-scheme: dark){
   body{background:#1a1a18; color:#e8e8e4}
@@ -127,6 +136,11 @@ button:active{transform:scale(0.98)}
   .elev-area{fill:rgba(96,165,250,0.18)}
   .elev-line{stroke:#60a5fa}
   .elev-label{color:#888;background:rgba(26,26,24,0.7)}
+  .axis-row{color:#777}
+  .zone-btn{border-color:#444;color:#bbb}
+  .zone-btn:hover{background:#333}
+  .zone-btn.active{background:#60a5fa;color:#1a1a18;border-color:#60a5fa}
+  .zone-info{color:#777}
 }
 </style>
 </head>
@@ -242,7 +256,9 @@ function handleTCX(raw,fname,size){
 }
 
 // ---- activity (GPX/TCX) helpers ----
-let unitSystem='metric';
+let unitSystem='imperial';
+let xAxisMode='distance';
+let colorMode='none';
 let currentActivity=null;
 
 function txt(el,tag){const e=el.getElementsByTagName(tag)[0];return e?e.textContent.trim():null}
@@ -279,6 +295,13 @@ function fmtSpeedU(mps){
 function fmtTempU(c){
   if(c===null||c===undefined)return '–';
   return unitSystem==='imperial'?Math.round(c*9/5+32)+'°F':Math.round(c)+'°C';
+}
+function fmtStartTime(d){
+  if(!d)return '–';
+  const mm=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0'),yy=String(d.getFullYear()%100).padStart(2,'0');
+  let h=d.getHours();const ap=h<12?'a':'p';h=h%12;if(h===0)h=12;
+  const min=String(d.getMinutes()).padStart(2,'0');
+  return mm+'/'+dd+'/'+yy+' '+h+':'+min+ap;
 }
 
 // Build a flat array of per-point samples (distance/elevation/time/hr/cadence/power/temp/lat/lon)
@@ -368,7 +391,9 @@ function computeStats(samples){
   if(minEle!==Infinity){st.minEleM=minEle;st.maxEleM=maxEle}
   st.gainM=gain;st.lossM=loss;
   if(hrN){st.avgHR=Math.round(hrSum/hrN);st.maxHR=hrMax}
-  if(cadN)st.avgCadence=Math.round(cadSum/cadN);
+  let cadMax=0;
+  samples.forEach(s=>{if(s.cad!==null)cadMax=Math.max(cadMax,s.cad)});
+  if(cadN){st.avgCadence=Math.round(cadSum/cadN);st.maxCadence=cadMax}
   if(pwN){st.avgPower=Math.round(pwSum/pwN);st.maxPower=pwMax}
   if(tN){st.minTemp=tMin;st.maxTemp=tMax}
 
@@ -408,20 +433,33 @@ function computeStats(samples){
   }
   st.steepestGradePct=steepest;
   st.climbPerKm=st.distanceM>0?gain/(st.distanceM/1000):null;
+  st.climbPerMi=st.distanceM>0?gain/(st.distanceM/1609.344):null;
 
   st.startTime=t0!==null?new Date(t0):null;
   const firstLL=samples.find(s=>s.lat!==null&&s.lon!==null);
   if(firstLL){st.startLat=firstLL.lat;st.startLon=firstLL.lon}
 
-  // downsampled elevation profile for the sparkline
+  // smoothed instantaneous speed (m/s) for each sample, using the same window as the grade calc
+  const spd=samples.map((s,i)=>{
+    const j0=Math.max(0,i-win),j1=Math.min(n-1,i+win);
+    const a=samples[j0],b=samples[j1];
+    if(a.t===null||b.t===null||a.dist===null||b.dist===null)return null;
+    const dt=(b.t-a.t)/1000;
+    return dt>0?(b.dist-a.dist)/dt:null;
+  });
+  let spdMax=0;
+  spd.forEach(v=>{if(v!==null)spdMax=Math.max(spdMax,v)});
+  if(spdMax>0)st.maxSpeed=spdMax;
+
+  // downsampled elevation profile for the sparkline: [distanceM, elevationM, timestampMs, hr, cadence, watts, speedMps]
   const maxPts=150,step=Math.max(1,Math.floor(n/maxPts));
   st.profile=[];
   for(let i=0;i<n;i+=step){
-    if(samples[i].ele!==null)st.profile.push([samples[i].dist,samples[i].ele]);
+    if(samples[i].ele!==null)st.profile.push([samples[i].dist,samples[i].ele,samples[i].t,samples[i].hr,samples[i].cad,samples[i].watts,spd[i]]);
   }
   const last=samples[n-1];
   if(last.ele!==null&&(!st.profile.length||st.profile[st.profile.length-1][0]!==last.dist)){
-    st.profile.push([last.dist,last.ele]);
+    st.profile.push([last.dist,last.ele,last.t,last.hr,last.cad,last.watts,spd[n-1]]);
   }
 
   return st;
@@ -441,23 +479,126 @@ function buildTCXActivity(doc){
   return{stats:computeStats(buildTCXSamples(doc)),kind:'TCX',title:'TCX Activity'+(laps?' ('+laps+' lap'+(laps!==1?'s':'')+')':''),sub:sport};
 }
 
-function buildSparkline(profile){
+// returns the x-value (distanceM, or elapsed seconds when xMode==='time') for a profile point
+function profileX(p,xMode,t0){
+  if(xMode==='time'&&p[2]!==null&&t0!==null)return (p[2]-t0)/1000;
+  return p[0];
+}
+function profileHasTime(profile){
+  return !!profile&&profile.length>1&&profile.every(p=>p[2]!==null);
+}
+// zone colors: 1 (0-60%) blue, 2 (60-70%) green, 3 (70-80%) yellow, 4 (80-90%) orange, 5 (90-100%) red
+const ZONE_COLORS=['#3b82f6','#22c55e','#eab308','#f97316','#ef4444'];
+function zoneColor(pct){
+  if(pct<60)return ZONE_COLORS[0];
+  if(pct<70)return ZONE_COLORS[1];
+  if(pct<80)return ZONE_COLORS[2];
+  if(pct<90)return ZONE_COLORS[3];
+  return ZONE_COLORS[4];
+}
+// fixed power zone bins (watts): Z1 <100, Z2 100-200, Z3 200-300, Z4 300-400, Z5 400+
+function zoneColorPower(watts){
+  if(watts<100)return ZONE_COLORS[0];
+  if(watts<200)return ZONE_COLORS[1];
+  if(watts<300)return ZONE_COLORS[2];
+  if(watts<400)return ZONE_COLORS[3];
+  return ZONE_COLORS[4];
+}
+// fixed cadence zone bins (rpm): Z1 <55, Z2 55-75, Z3 75-95, Z4 95-110, Z5 110+
+function zoneColorCadence(rpm){
+  if(rpm<55)return ZONE_COLORS[0];
+  if(rpm<75)return ZONE_COLORS[1];
+  if(rpm<95)return ZONE_COLORS[2];
+  if(rpm<110)return ZONE_COLORS[3];
+  return ZONE_COLORS[4];
+}
+// fixed speed zone bins (mph): Z1 <6, Z2 6-12, Z3 12-17, Z4 17-25, Z5 25+
+function zoneColorSpeed(mps){
+  const mph=mps*2.23694;
+  if(mph<6)return ZONE_COLORS[0];
+  if(mph<12)return ZONE_COLORS[1];
+  if(mph<17)return ZONE_COLORS[2];
+  if(mph<25)return ZONE_COLORS[3];
+  return ZONE_COLORS[4];
+}
+// human-readable zone value ranges for a given color mode, color-coded to match the chart zones,
+// e.g. "Z1: -114  Z2: 115-133  ... (bpm)"
+function zoneRangesHtml(colorMode,maxVal){
+  if(!maxVal)return '';
+  const units={hr:'bpm',power:'W',cadence:'rpm',speed:unitSystem==='imperial'?'mph':'km/h'};
+  let scale=maxVal,dec=0;
+  if(colorMode==='speed'){scale=unitSystem==='imperial'?maxVal*2.23694:maxVal*3.6;dec=1}
+  const step=dec?0.1:1;
+  const fmt=v=>dec?v.toFixed(dec):Math.round(v);
+  let labels;
+  if(colorMode==='power'){
+    labels=['Z1: →100','Z2: 100-200','Z3: 200-300','Z4: 300-400','Z5: 400+'];
+  }else if(colorMode==='cadence'){
+    labels=['Z1: →55','Z2: 55-75','Z3: 75-95','Z4: 95-110','Z5: 110+'];
+  }else if(colorMode==='speed'){
+    const mphBins=[6,12,17,25];
+    const sb=unitSystem==='imperial'?mphBins:mphBins.map(v=>Math.round(v*1.60934));
+    labels=['Z1: →'+sb[0],'Z2: '+sb[0]+'-'+sb[1],'Z3: '+sb[1]+'-'+sb[2],'Z4: '+sb[2]+'-'+sb[3],'Z5: '+sb[3]+'+'];
+  }else{
+    const b=[0.6,0.7,0.8,0.9].map(f=>+(scale*f).toFixed(dec));
+    labels=['Z1: →'+fmt(b[0])];
+    for(let i=1;i<4;i++)labels.push('Z'+(i+1)+': '+fmt(+(b[i-1]+step).toFixed(dec))+'-'+fmt(b[i]));
+    labels.push('Z5: '+fmt(+(b[3]+step).toFixed(dec))+'+');
+  }
+  const spans=labels.map((l,i)=>'<span style="color:'+ZONE_COLORS[i]+'">'+esc(l)+'</span>');
+  return spans.join('  ')+' ('+esc(units[colorMode])+')';
+}
+// index of [hr,cadence,watts,speed] within a profile point, and the stats field holding its max
+const COLOR_FIELDS={hr:{idx:3,maxKey:'maxHR'},cadence:{idx:4,maxKey:'maxCadence'},power:{idx:5,maxKey:'maxPower'},speed:{idx:6,maxKey:'maxSpeed'}};
+function buildSparkline(profile,xMode,colorMode,maxVal){
   if(!profile||profile.length<2)return '';
   const w=600,h=70,pad=2;
-  const dists=profile.map(p=>p[0]),eles=profile.map(p=>p[1]);
-  const minD=dists[0],maxD=dists[dists.length-1];
+  const t0=profile[0][2];
+  const xs=profile.map(p=>profileX(p,xMode,t0)),eles=profile.map(p=>p[1]);
+  const minX=xs[0],maxX=xs[xs.length-1];
   const minE=Math.min(...eles),maxE=Math.max(...eles);
-  const spanD=(maxD-minD)||1,spanE=(maxE-minE)||1;
-  const pts=profile.map(([d,e])=>{
-    const x=pad+(d-minD)/spanD*(w-2*pad);
-    const y=h-pad-(e-minE)/spanE*(h-2*pad);
-    return x.toFixed(1)+','+y.toFixed(1);
+  const spanX=(maxX-minX)||1,spanE=(maxE-minE)||1;
+  const pts=xs.map((x,i)=>{
+    const px=pad+(x-minX)/spanX*(w-2*pad);
+    const py=h-pad-(eles[i]-minE)/spanE*(h-2*pad);
+    return [px,py];
   });
-  const areaPts='0,'+h+' '+pts.join(' ')+' '+w+','+h;
+  const ptStrs=pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1));
+  const areaPts='0,'+h+' '+ptStrs.join(' ')+' '+w+','+h;
+  let line;
+  const cf=COLOR_FIELDS[colorMode];
+  if(cf&&maxVal){
+    let segs='';
+    for(let i=0;i<pts.length-1;i++){
+      const v0=profile[i][cf.idx],v1=profile[i+1][cf.idx];
+      let v=null;
+      if(v0!==null&&v1!==null)v=(v0+v1)/2;else if(v0!==null)v=v0;else if(v1!==null)v=v1;
+      const color=v===null?'#999':(colorMode==='power'?zoneColorPower(v):colorMode==='cadence'?zoneColorCadence(v):colorMode==='speed'?zoneColorSpeed(v):zoneColor(v/maxVal*100));
+      segs+='<line x1="'+pts[i][0].toFixed(1)+'" y1="'+pts[i][1].toFixed(1)+'" x2="'+pts[i+1][0].toFixed(1)+'" y2="'+pts[i+1][1].toFixed(1)+'" stroke="'+color+'" stroke-width="1.5" vector-effect="non-scaling-stroke"/>';
+    }
+    line=segs;
+  }else{
+    line='<polyline points="'+ptStrs.join(' ')+'" class="elev-line" vector-effect="non-scaling-stroke"/>';
+  }
   return '<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" class="elev-spark">'
     +'<polygon points="'+areaPts+'" class="elev-area"/>'
-    +'<polyline points="'+pts.join(' ')+'" class="elev-line" vector-effect="non-scaling-stroke"/>'
+    +line
     +'</svg>';
+}
+// row of evenly-spaced tick labels along the x-axis (distance or elapsed time)
+function buildAxisRow(profile,xMode){
+  if(!profile||profile.length<2)return '';
+  const t0=profile[0][2];
+  const xs=profile.map(p=>profileX(p,xMode,t0));
+  const minX=xs[0],maxX=xs[xs.length-1];
+  const ticks=5;
+  let html='<div class="axis-row">';
+  for(let i=0;i<ticks;i++){
+    const val=minX+(i/(ticks-1))*(maxX-minX);
+    html+='<span>'+esc(xMode==='time'?fmtDuration(val):fmtDistU(val))+'</span>';
+  }
+  html+='</div>';
+  return html;
 }
 
 function renderSummary(activity){
@@ -472,23 +613,35 @@ function renderSummary(activity){
   if(s.movingAvgSpeedMps!==null)items.push(['Moving Avg Speed',fmtSpeedU(s.movingAvgSpeedMps)]);
   if(s.minEleM!==undefined)items.push(['Elevation',fmtEleU(s.minEleM)+' – '+fmtEleU(s.maxEleM)]);
   items.push(['Elevation Gain / Loss',fmtEleU(s.gainM)+' / '+fmtEleU(s.lossM)]);
-  if(s.climbPerKm)items.push(['Climb Rate',fmtEleU(s.climbPerKm)+' / km']);
+  if(s.climbPerKm)items.push(['Climb Rate',unitSystem==='imperial'?fmtEleU(s.climbPerMi)+' / mi':fmtEleU(s.climbPerKm)+' / km']);
   if(s.steepestGradePct)items.push(['Steepest (100m)',s.steepestGradePct.toFixed(1)+'%']);
   if(s.avgHR!==undefined)items.push(['Avg / Max HR',s.avgHR+' / '+s.maxHR+' bpm']);
   if(s.avgCadence!==undefined)items.push(['Avg Cadence',s.avgCadence+' rpm']);
   if(s.avgPower!==undefined)items.push(['Avg / Max Power',s.avgPower+' / '+s.maxPower+' W']);
   if(s.minTemp!==undefined)items.push(['Temperature',fmtTempU(s.minTemp)+' – '+fmtTempU(s.maxTemp)]);
-  if(s.startTime)items.push(['Start Time',s.startTime.toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'})]);
+  if(s.startTime)items.push(['Start Time',fmtStartTime(s.startTime)]);
 
   let html='<div class="summary-grid" id="activity-summary"><div class="summary-title">'
     +esc(activity.title)+(activity.sub?' <span style="opacity:0.6;font-weight:400">— '+esc(activity.sub)+'</span>':'')
     +'<span class="summary-actions">';
+  const hasTime=profileHasTime(s.profile);
+  const xMode=(xAxisMode==='time'&&hasTime)?'time':'distance';
   if(s.startLat!==undefined)html+='<a class="map-link" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query='+s.startLat+','+s.startLon+'">View start on map ↗</a>';
+  if(hasTime)html+='<button class="unit-toggle" onclick="toggleXAxis()">X: '+(xMode==='time'?'Time':'Distance')+'</button>';
   html+='<button class="unit-toggle" onclick="toggleUnits()">'+(unitSystem==='imperial'?'mi · ft · °F':'km · m · °C')+'</button>';
   html+='</span></div>';
 
   if(s.profile&&s.profile.length>1){
-    html+='<div class="summary-chart"><span class="elev-label elev-max">'+fmtEleU(s.maxEleM)+'</span><span class="elev-label elev-min">'+fmtEleU(s.minEleM)+'</span>'+buildSparkline(s.profile)+'</div>';
+    const maxVal=COLOR_FIELDS[colorMode]?s[COLOR_FIELDS[colorMode].maxKey]:undefined;
+    html+='<div class="summary-chart"><span class="elev-label elev-max">'+fmtEleU(s.maxEleM)+'</span><span class="elev-label elev-min">'+fmtEleU(s.minEleM)+'</span>'+buildSparkline(s.profile,xMode,colorMode,maxVal)+'</div>';
+    html+=buildAxisRow(s.profile,xMode);
+    html+='<div class="zone-buttons">';
+    if(s.avgHR!==undefined)html+='<button class="zone-btn'+(colorMode==='hr'?' active':'')+'" onclick="setColorMode(\'hr\')">Heart Rate Zones</button>';
+    if(s.avgPower!==undefined)html+='<button class="zone-btn'+(colorMode==='power'?' active':'')+'" onclick="setColorMode(\'power\')">Power Zones</button>';
+    if(s.avgCadence!==undefined)html+='<button class="zone-btn'+(colorMode==='cadence'?' active':'')+'" onclick="setColorMode(\'cadence\')">Cadence</button>';
+    if(s.maxSpeed)html+='<button class="zone-btn'+(colorMode==='speed'?' active':'')+'" onclick="setColorMode(\'speed\')">Speed</button>';
+    if(maxVal)html+='<span class="zone-info">'+zoneRangesHtml(colorMode,maxVal)+'</span>';
+    html+='</div>';
   }
   items.forEach(([label,val])=>{
     html+='<div class="stat"><span class="stat-label">'+esc(label)+'</span><span class="stat-value">'+esc(String(val))+'</span></div>';
@@ -499,6 +652,18 @@ function renderSummary(activity){
 
 function toggleUnits(){
   unitSystem=unitSystem==='metric'?'imperial':'metric';
+  const el=document.getElementById('activity-summary');
+  if(el&&currentActivity)el.outerHTML=renderSummary(currentActivity);
+}
+
+function setColorMode(mode){
+  colorMode=colorMode===mode?'none':mode;
+  const el=document.getElementById('activity-summary');
+  if(el&&currentActivity)el.outerHTML=renderSummary(currentActivity);
+}
+
+function toggleXAxis(){
+  xAxisMode=xAxisMode==='distance'?'time':'distance';
   const el=document.getElementById('activity-summary');
   if(el&&currentActivity)el.outerHTML=renderSummary(currentActivity);
 }
