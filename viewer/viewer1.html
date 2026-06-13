@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JSON / XML / GPX / TCX Viewer</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f9f9f8;color:#1a1a18;padding:1.5rem;min-height:100vh}
+h1{font-size:18px;font-weight:500;margin-bottom:1.25rem;color:#1a1a18}
+#drop-zone{border:1.5px dashed #ccc;border-radius:12px;padding:2.5rem;text-align:center;cursor:pointer;transition:background 0.15s;margin-bottom:1rem;background:#fff}
+#drop-zone:hover,#drop-zone.over{background:#f1efe8}
+#drop-zone input{display:none}
+.dz-icon{font-size:28px;margin-bottom:8px; color:#888}
+.dz-label{font-size:14px;font-weight:500; color:#555}
+.dz-sub{font-size:12px; color:#999;margin-top:4px}
+#controls{display:none;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+#search{flex:1;min-width:160px;font-family:system-ui,sans-serif;font-size:13px;padding:5px 10px;border:0.5px solid #ccc;border-radius:6px; outline:none;background:#fff;color:#1a1a18}
+#search:focus{border-color:#888}
+button{font-family:system-ui,sans-serif;font-size:12px;padding:5px 12px;cursor:pointer;white-space:nowrap;border:0.5px solid #ccc;border-radius:6px;background:transparent;color:#444}
+button:hover{background:#f1efe8}
+button:active{transform:scale(0.98)}
+#tree-wrap{border:0.5px solid #ddd;border-radius:8px;padding:12px 16px;overflow-x:auto;display:none;background:#fff}
+.stats{font-family:system-ui,sans-serif;font-size:12px;color:#888;margin-bottom:8px}
+.node{padding-left:1.25rem;position:relative}
+.node::before{content:'';position:absolute;left:4px;top:0;bottom:0;border-left:1px solid #e5e5e5}
+.node:last-child::before{bottom:50%}
+.row{display:flex;align-items:baseline;gap:5px;padding:1.5px 0;cursor:default;user-select:none;font-family:'Menlo','Consolas','Monaco',monospace;font-size: 13px}
+.row:hover{background:#f5f5f3;border-radius:4px;margin:0 -4px;padding-left:4px;padding-right:4px}
+.toggle{width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;border-radius:3px;font-size:10px;cursor:pointer;color:#aaa;flex-shrink:0;line-height:1;border:none;background:transparent;padding:0}
+.toggle:hover{background:#e5e5e5}
+.key{color:#7c3aed;font-weight:500}
+.xml-tag{color:#0369a1;font-weight:500}
+.xml-attr{color:#b45309}
+.xml-comment{color:#9ca3af;font-style:italic}
+.xml-cdata{color:#059669;font-style:italic}
+.colon{color:#aaa}
+.val-str{color:#059669}
+.val-num{color:#2563eb}
+.val-bool{color:#d97706}
+.val-null{color:#6b7280;font-style:italic}
+.val-type{font-size:11px;color:#aaa;font-family:system-ui,sans-serif}
+.collapsed>.node{display:none}
+.highlight .key,.highlight .val-str,.highlight .val-num,.highlight .xml-tag,.highlight .xml-attr{background:#615b32;border-radius:2px;color:inherit}
+.banner{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-radius:8px;margin-bottom:12px;font-family:system-ui,sans-serif;border:0.5px solid}
+.banner-warn{background:#fefce8;border-color:#fde047}
+.banner-err{background:#fef2f2;border-color:#fca5a5}
+.banner-icon{font-size:15px;flex-shrink:0;margin-top:1px}
+.banner-warn .banner-icon{color:#a16207}
+.banner-err .banner-icon{color:#dc2626}
+.banner-msg{font-size: 13px; line-height:1.5}
+.banner-warn .banner-msg{color:#854d0e}
+.banner-err.banner-msg{color:#dc2626}
+.banner-sub{font-size:12px;opacity:0.75;margin-top:2px}
+#raw-wrap{font-family:'Menlo','Consolas','Monaco',monospace;font-size:12px;line-height:1.7;overflow-x:auto;border:0.5px solid #ddd;border-radius:8px}
+.raw-line{display:flex;min-width:max-content}
+.raw-line:hover{background:#f5f5f3}
+.raw-line.err-line{background:rgba(220,38,38,0.07)}
+.ln{color:#bbb;text-align:right;padding:0 10px;min-width:40px;user-select:none;border-right:0.5px solid #e5e5e5;flex-shrink:0}
+.raw-line.err-line .ln{color:#dc2626;font-weight:500}
+.lc{padding:0 12px;white-space:pre;color:#1a1a18}
+.err-char{background:rgba(228,38,38,0.2);border-bottom:2px solid #dc2626;border-radius:2px;color:#dc2626;font-weight:500}
+.err-caret{display:inline-block;width:2px;height:1em;background:#dc2626;border-radius:1px;vertical-align:text-bottom;animation:blink 1s step-end infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px 16px;margin-bottom:12px;padding:12px 14px;background:#fff;border:0.5px solid #ddd;border-radius:8px;font-family:system-ui,sans-serif}
+.summary-title{grid-column:1/-1;font-size:13px;font-weight:600;color:#444;margin-bottom:2px;display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.summary-actions{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:400}
+.map-link{color:#2563eb;text-decoration:none}
+.map-link:hover{text-decoration:underline}
+.unit-toggle{font-family:'Menlo','Consolas','Monaco',monospace;font-size:11px;padding:2px 8px;cursor:pointer;border:0.5px solid #ccc;border-radius:5px;background:transparent;color:#666}
+.unit-toggle:hover{background:#f1efe8}
+.summary-grid .stat{display:flex;flex-direction:column;gap:2px}
+.summary-grid .stat-label{font-size:11px;color:#999;text-transform:uppercase;letter-spacing:0.04em}
+.summary-grid .stat-value{font-size:15px;font-weight:600;color:#1a1a18;font-family:'Menlo','Consolas','Monaco',monospace}
+.summary-chart{grid-column:1/-1;position:relative;margin:2px 0 4px}
+.elev-spark{width:100%;height:70px;display:block}
+.elev-area{fill:rgba(37,99,235,0.15);stroke:none}
+.elev-line{fill:none;stroke:#2563eb;stroke-width:1.5}
+.elev-label{position:absolute;font-size:10px;color:#999;font-family:'Menlo','Consolas','Monaco',monospace;pointer-events:none;background:rgba(255,255,255,0.7);padding:0 4px;border-radius:3px}
+.elev-max{top:2px;left:4px}
+.elev-min{bottom:2px;left:4px}
+
+@media (prefers-color-scheme: dark){
+  body{background:#1a1a18; color:#e8e8e4}
+  h1{color:#e8e8e4}
+  #drop-zone{background:#2c2c2a;border-color:#444}
+  #drop-zone:hover,#drop-zone.over{background:#333}
+  .dz-label{color:#aaa}
+  .dz-sub{color:#666}
+  #search{background:#2c2c2a;border-color:#444;color:#e8e8e4}
+  #search:focus{border-color:#888}
+  button{border-color:#444;color:#bbb}
+  button:hover{background:#333}
+  #tree-wrap{background:#2c2c2a;border-color:#444}
+  .stats{color:#666}
+  .node::before{border-color:#333}
+  .row:hover{background:#333}
+  .toggle:hover{background:#444}
+  .key{color:#a78bfa}
+  .xml-tag{color:#38bdf8}
+  .xml-attr{color:#fbbf24}
+  .xml-comment{color:#6b7280}
+  .val-str{color:#34d399}
+  .val-num{color:#60a5fa}
+  .val-bool{color:#fbbf24}
+  .val-null{color:#9ca3af}
+  .val-type{color:#666}
+  .banner-warn{background:#2d2005;border-color:#713f12}
+  .banner-warn .banner-icon{color:#fbbf24}
+  .banner-warn .banner-msg{color:#fde68a}
+  .banner-err{background:#2d0a0a;border-color:#7f1d1d}
+  .banner-err .banner-icon{color:#f87171}
+  .banner-err .banner-msg{color:#fca5a5}
+  #raw-wrap{border-color:#444}
+  .raw-line:hover{background:#333}
+  .raw-line.err-line{background:rgba(220,38,38,0.12)}
+  .ln{color:#555;border-color:#333}
+  .raw-line.err-line .ln{color:#f87171}
+  .lc{color:#e8e8e4}
+  .summary-grid{background:#2c2c2a;border-color:#444}
+  .summary-title{color:#bbb}
+  .summary-grid .stat-label{color:#777}
+  .summary-grid .stat-value{color:#e8e8e4}
+  .map-link{color:#60a5fa}
+  .unit-toggle{border-color:#444;color:#bbb}
+  .unit-toggle:hover{background:#333}
+  .elev-area{fill:rgba(96,165,250,0.18)}
+  .elev-line{stroke:#60a5fa}
+  .elev-label{color:#888;background:rgba(26,26,24,0.7)}
+}
+</style>
+</head>
+<body>
+<h1>JSON / XML / GPX / TCX Viewer</h1>
+<div id="drop-zone">
+  <input type="file" id="file-input" accept=".json,.xml,.gpx,.tcx,application/json,application/xml,text/xml">
+  <div class="dz-icon">{ }</div>
+  <div class="dz-label">Drop a JSON, XML, GPX, or TCX file here</div>
+  <div class="dz-sub">or click to browse</div>
+</div>
+<div id="controls">
+  <input id="search" type="text" placeholder="Search keys, tags, or values..." oninput="filterTree(this.value)">
+  <button id="btn-expand" onclick="setAll(false)">Expand all</button>
+  <button id="btn-collapse" onclick="setAll(true)">Collapse all</button>
+  <button onclick="reset()">Clear</button>
+</div>
+<div id="tree-wrap">
+  <div class="stats" id="stats"></div>
+  <div id="tree"></div>
+</div>
+<script>
+const dz=document.getElementById('drop-zone');
+const fi=document.getElementById('file-input');
+dz.onclick=()=>fi.click();
+dz.ondragover=e=>{e.preventDefault();dz.classList.add('over')};
+dz.ondragleave=()=>dz.classList.remove('over');
+dz.ondrop=e=>{e.preventDefault();dz.classList.remove('over');if(e.dataTransfer.files[0])readFile(e.dataTransfer.files[0])};
+fi.onchange=e=>{if(e.target.files[0])readFile(e.target.files[0])};
+
+function fileType(f){
+  const name=f.name.toLowerCase();
+  if(name.endsWith('.gpx'))return 'gpx';
+  if(name.endsWith('.tcx'))return 'tcx';
+  if(name.endsWith('.xml')||f.type==='application/xml'||f.type==='text/xml')return 'xml';
+  if(name.endsWith('.json')||f.type==='application/json')return 'json';
+  return 'json';
+}
+
+function readFile(f){
+  const r=new FileReader();
+  r.onload=e=>{
+    const raw=e.target.result;
+    const t=fileType(f);
+    if(t==='gpx'){
+      handleGPX(raw,f.name,f.size);
+    }else if(t==='tcx'){
+      handleTCX(raw,f.name,f.size);
+    }else if(t==='xml'){
+      handleXML(raw,f.name,f.size);
+    }else{
+	  handleJSON(raw,f.name,f.size);
+    }
+  };
+  r.readAsText(f);
+}
+
+function handleJSON(raw,fname,size){
+  try{
+    const data=JSON.parse(raw);
+    renderJSONTree(data,fname,size,null);
+  }catch(ex1){
+    const stripped=raw.replace(/\\/g,'');
+    const removed=(raw.match(/\\/g)||[]).length;
+	if(removed>0){
+      try{
+        const data=JSON.parse(stripped);
+        renderJSONTree(data,fname,size,removed);
+		return;
+      }catch(ex2){}
+    }
+    renderRawError(raw,ex1.message,fname,size,'JSON');
+  }
+}
+
+function handleXML(raw,fname,size){
+  const parser=new DOMParser();
+  const doc=parser.parseFromString(raw,'application/xml');
+  const errEl=doc.querySelector('parsererror');
+  if(errEl){
+    const errText=errEl.textContent.trim();
+    const cleaned=errText.replace(/This page contains the following errors:\s*/i,'').replace(/Below is a rendering.*$/si,'').trim();
+	renderRawError(raw,cleaned,fname,size,'XML');
+    return;
+  }
+  renderXMLTree(doc,fname,size);
+}
+
+function handleGPX(raw,fname,size){
+  const parser=new DOMParser();
+  const doc=parser.parseFromString(raw,'application/xml');
+  const errEl=doc.querySelector('parsererror');
+  if(errEl){
+    const errText=errEl.textContent.trim();
+    const cleaned=errText.replace(/This page contains the following errors:\s*/i,'').replace(/Below is a rendering.*$/si,'').trim();
+    renderRawError(raw,cleaned,fname,size,'GPX');
+    return;
+  }
+  renderActivityTree(doc,fname,size,'GPX',buildGPXActivity(doc));
+}
+
+function handleTCX(raw,fname,size){
+  const parser=new DOMParser();
+  const doc=parser.parseFromString(raw,'application/xml');
+  const errEl=doc.querySelector('parsererror');
+  if(errEl){
+    const errText=errEl.textContent.trim();
+    const cleaned=errText.replace(/This page contains the following errors:\s*/i,'').replace(/Below is a rendering.*$/si,'').trim();
+    renderRawError(raw,cleaned,fname,size,'TCX');
+    return;
+  }
+  renderActivityTree(doc,fname,size,'TCX',buildTCXActivity(doc));
+}
+
+// ---- activity (GPX/TCX) helpers ----
+let unitSystem='metric';
+let currentActivity=null;
+
+function txt(el,tag){const e=el.getElementsByTagName(tag)[0];return e?e.textContent.trim():null}
+function num(el,tag){const v=txt(el,tag);return v===null||v===''?null:parseFloat(v)}
+function directChild(el,tag){for(const c of el.children){if(c.tagName===tag)return c}return null}
+function dcNum(el,tag){const e=directChild(el,tag);if(!e)return null;const v=parseFloat(e.textContent);return isNaN(v)?null:v}
+function bpmVal(el,tag){const e=directChild(el,tag);if(!e)return null;return dcNum(e,'Value')}
+
+function haversine(lat1,lon1,lat2,lon2){
+  const R=6371000,toRad=d=>d*Math.PI/180;
+  const dLat=toRad(lat2-lat1),dLon=toRad(lon2-lon1);
+  const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+  return 2*R*Math.asin(Math.sqrt(a));
+}
+
+function fmtDuration(sec){
+  if(sec===null||sec===undefined||isNaN(sec))return '–';
+  sec=Math.round(sec);
+  const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
+  return (h>0?h+':'+String(m).padStart(2,'0'):m)+':'+String(s).padStart(2,'0');
+}
+function fmtDistU(m){
+  if(m===null||m===undefined)return '–';
+  return unitSystem==='imperial'?(m/1609.344).toFixed(2)+' mi':(m/1000).toFixed(2)+' km';
+}
+function fmtEleU(m){
+  if(m===null||m===undefined)return '–';
+  return unitSystem==='imperial'?Math.round(m*3.28084).toLocaleString()+' ft':Math.round(m).toLocaleString()+' m';
+}
+function fmtSpeedU(mps){
+  if(mps===null||mps===undefined||isNaN(mps))return '–';
+  return unitSystem==='imperial'?(mps*2.23694).toFixed(1)+' mph':(mps*3.6).toFixed(1)+' km/h';
+}
+function fmtTempU(c){
+  if(c===null||c===undefined)return '–';
+  return unitSystem==='imperial'?Math.round(c*9/5+32)+'°F':Math.round(c)+'°C';
+}
+
+// Build a flat array of per-point samples (distance/elevation/time/hr/cadence/power/temp/lat/lon)
+function buildGPXSamples(doc){
+  const trkpts=Array.from(doc.getElementsByTagName('trkpt'));
+  let dist=0,prevLat=null,prevLon=null;
+  return trkpts.map(tp=>{
+    const lat=parseFloat(tp.getAttribute('lat')),lon=parseFloat(tp.getAttribute('lon'));
+    const validLL=!isNaN(lat)&&!isNaN(lon);
+    if(validLL){
+      if(prevLat!==null)dist+=haversine(prevLat,prevLon,lat,lon);
+      prevLat=lat;prevLon=lon;
+    }
+    const tStr=txt(tp,'time');
+    return{
+      dist,
+      ele:num(tp,'ele'),
+      t:tStr?new Date(tStr).getTime():null,
+      hr:num(tp,'ns3:hr'),
+      cad:num(tp,'ns3:cad'),
+      atemp:num(tp,'ns3:atemp'),
+      watts:null,
+      lat:validLL?lat:null,lon:validLL?lon:null
+    };
+  });
+}
+
+function buildTCXSamples(doc){
+  const tps=Array.from(doc.getElementsByTagName('Trackpoint'));
+  let hdist=0,prevLat=null,prevLon=null;
+  return tps.map(tp=>{
+    const pos=directChild(tp,'Position');
+    const lat=pos?dcNum(pos,'LatitudeDegrees'):null;
+    const lon=pos?dcNum(pos,'LongitudeDegrees'):null;
+    let dist=dcNum(tp,'DistanceMeters');
+    if(dist===null){
+      if(lat!==null&&lon!==null){
+        if(prevLat!==null)hdist+=haversine(prevLat,prevLon,lat,lon);
+        prevLat=lat;prevLon=lon;
+      }
+      dist=hdist;
+    }
+    let watts=null;
+    const ext=directChild(tp,'Extensions');
+    if(ext){
+      const tpx=directChild(ext,'ns3:TPX');
+      if(tpx)watts=dcNum(tpx,'ns3:Watts');
+    }
+    const tStr=txt(tp,'Time');
+    return{
+      dist,
+      ele:dcNum(tp,'AltitudeMeters'),
+      t:tStr?new Date(tStr).getTime():null,
+      hr:bpmVal(tp,'HeartRateBpm'),
+      cad:dcNum(tp,'Cadence'),
+      atemp:null,
+      watts,
+      lat,lon
+    };
+  });
+}
+
+// Turn a flat samples array into a stats object used by renderSummary
+function computeStats(samples){
+  const n=samples.length;
+  const st={n};
+  if(!n)return st;
+
+  st.distanceM=samples[n-1].dist||0;
+  const t0=samples[0].t,t1=samples[n-1].t;
+  st.durationS=(t0!==null&&t1!==null)?(t1-t0)/1000:null;
+
+  let minEle=Infinity,maxEle=-Infinity,gain=0,loss=0,prevEle=null;
+  let hrSum=0,hrN=0,hrMax=0,cadSum=0,cadN=0,pwSum=0,pwN=0,pwMax=0;
+  let tSum=0,tN=0,tMin=Infinity,tMax=-Infinity;
+  samples.forEach(s=>{
+    if(s.ele!==null){
+      minEle=Math.min(minEle,s.ele);maxEle=Math.max(maxEle,s.ele);
+      if(prevEle!==null){const d=s.ele-prevEle;if(d>0)gain+=d;else loss-=d}
+      prevEle=s.ele;
+    }
+    if(s.hr!==null){hrSum+=s.hr;hrN++;hrMax=Math.max(hrMax,s.hr)}
+    if(s.cad!==null){cadSum+=s.cad;cadN++}
+    if(s.watts!==null){pwSum+=s.watts;pwN++;pwMax=Math.max(pwMax,s.watts)}
+    if(s.atemp!==null){tSum+=s.atemp;tN++;tMin=Math.min(tMin,s.atemp);tMax=Math.max(tMax,s.atemp)}
+  });
+  if(minEle!==Infinity){st.minEleM=minEle;st.maxEleM=maxEle}
+  st.gainM=gain;st.lossM=loss;
+  if(hrN){st.avgHR=Math.round(hrSum/hrN);st.maxHR=hrMax}
+  if(cadN)st.avgCadence=Math.round(cadSum/cadN);
+  if(pwN){st.avgPower=Math.round(pwSum/pwN);st.maxPower=pwMax}
+  if(tN){st.minTemp=tMin;st.maxTemp=tMax}
+
+  // moving time: only count intervals where speed exceeds a small threshold
+  let moveT=0,moveD=0;
+  for(let i=1;i<n;i++){
+    const a=samples[i-1],b=samples[i];
+    if(a.t===null||b.t===null)continue;
+    const dt=(b.t-a.t)/1000;
+    if(dt<=0)continue;
+    const dd=(b.dist!==null&&a.dist!==null)?(b.dist-a.dist):0;
+    if(dd/dt>0.5){moveT+=dt;moveD+=dd}
+  }
+  st.movingTimeS=moveT;
+  st.movingAvgSpeedMps=moveT>0?moveD/moveT:null;
+  st.avgSpeedMps=(st.durationS&&st.distanceM)?st.distanceM/st.durationS:null;
+
+  // steepest grade over any ~100m segment, and overall climb rate.
+  // elevation is smoothed first (moving average) since raw GPS/barometric
+  // elevation is noisy enough to produce spurious >50% "grades".
+  const win=5,smEle=samples.map((s,i)=>{
+    if(s.ele===null)return null;
+    let sum=0,cnt=0;
+    for(let j=Math.max(0,i-win);j<=Math.min(n-1,i+win);j++){
+      if(samples[j].ele!==null){sum+=samples[j].ele;cnt++}
+    }
+    return cnt?sum/cnt:null;
+  });
+  let steepest=0,i0=0;
+  for(let i=1;i<n;i++){
+    while(i0<i&&samples[i].dist-samples[i0].dist>100)i0++;
+    const dd=samples[i].dist-samples[i0].dist;
+    if(dd>=50&&smEle[i]!==null&&smEle[i0]!==null){
+      const grade=(smEle[i]-smEle[i0])/dd*100;
+      if(grade>steepest)steepest=grade;
+    }
+  }
+  st.steepestGradePct=steepest;
+  st.climbPerKm=st.distanceM>0?gain/(st.distanceM/1000):null;
+
+  st.startTime=t0!==null?new Date(t0):null;
+  const firstLL=samples.find(s=>s.lat!==null&&s.lon!==null);
+  if(firstLL){st.startLat=firstLL.lat;st.startLon=firstLL.lon}
+
+  // downsampled elevation profile for the sparkline
+  const maxPts=150,step=Math.max(1,Math.floor(n/maxPts));
+  st.profile=[];
+  for(let i=0;i<n;i+=step){
+    if(samples[i].ele!==null)st.profile.push([samples[i].dist,samples[i].ele]);
+  }
+  const last=samples[n-1];
+  if(last.ele!==null&&(!st.profile.length||st.profile[st.profile.length-1][0]!==last.dist)){
+    st.profile.push([last.dist,last.ele]);
+  }
+
+  return st;
+}
+
+function buildGPXActivity(doc){
+  const trk=doc.getElementsByTagName('trk')[0];
+  const name=trk?txt(trk,'name'):null;
+  const type=trk?txt(trk,'type'):null;
+  return{stats:computeStats(buildGPXSamples(doc)),kind:'GPX',title:name||'GPX Track',sub:type};
+}
+
+function buildTCXActivity(doc){
+  const activity=doc.getElementsByTagName('Activity')[0];
+  const sport=activity?activity.getAttribute('Sport'):null;
+  const laps=doc.getElementsByTagName('Lap').length;
+  return{stats:computeStats(buildTCXSamples(doc)),kind:'TCX',title:'TCX Activity'+(laps?' ('+laps+' lap'+(laps!==1?'s':'')+')':''),sub:sport};
+}
+
+function buildSparkline(profile){
+  if(!profile||profile.length<2)return '';
+  const w=600,h=70,pad=2;
+  const dists=profile.map(p=>p[0]),eles=profile.map(p=>p[1]);
+  const minD=dists[0],maxD=dists[dists.length-1];
+  const minE=Math.min(...eles),maxE=Math.max(...eles);
+  const spanD=(maxD-minD)||1,spanE=(maxE-minE)||1;
+  const pts=profile.map(([d,e])=>{
+    const x=pad+(d-minD)/spanD*(w-2*pad);
+    const y=h-pad-(e-minE)/spanE*(h-2*pad);
+    return x.toFixed(1)+','+y.toFixed(1);
+  });
+  const areaPts='0,'+h+' '+pts.join(' ')+' '+w+','+h;
+  return '<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" class="elev-spark">'
+    +'<polygon points="'+areaPts+'" class="elev-area"/>'
+    +'<polyline points="'+pts.join(' ')+'" class="elev-line" vector-effect="non-scaling-stroke"/>'
+    +'</svg>';
+}
+
+function renderSummary(activity){
+  const s=activity&&activity.stats;
+  if(!s||!s.n)return '';
+  const items=[];
+  items.push(['Track Points',s.n.toLocaleString()]);
+  items.push(['Distance',fmtDistU(s.distanceM)]);
+  items.push(['Duration',fmtDuration(s.durationS)]);
+  items.push(['Moving Time',fmtDuration(s.movingTimeS)]);
+  if(s.avgSpeedMps!==null)items.push(['Avg Speed',fmtSpeedU(s.avgSpeedMps)]);
+  if(s.movingAvgSpeedMps!==null)items.push(['Moving Avg Speed',fmtSpeedU(s.movingAvgSpeedMps)]);
+  if(s.minEleM!==undefined)items.push(['Elevation',fmtEleU(s.minEleM)+' – '+fmtEleU(s.maxEleM)]);
+  items.push(['Elevation Gain / Loss',fmtEleU(s.gainM)+' / '+fmtEleU(s.lossM)]);
+  if(s.climbPerKm)items.push(['Climb Rate',fmtEleU(s.climbPerKm)+' / km']);
+  if(s.steepestGradePct)items.push(['Steepest (100m)',s.steepestGradePct.toFixed(1)+'%']);
+  if(s.avgHR!==undefined)items.push(['Avg / Max HR',s.avgHR+' / '+s.maxHR+' bpm']);
+  if(s.avgCadence!==undefined)items.push(['Avg Cadence',s.avgCadence+' rpm']);
+  if(s.avgPower!==undefined)items.push(['Avg / Max Power',s.avgPower+' / '+s.maxPower+' W']);
+  if(s.minTemp!==undefined)items.push(['Temperature',fmtTempU(s.minTemp)+' – '+fmtTempU(s.maxTemp)]);
+  if(s.startTime)items.push(['Start Time',s.startTime.toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'})]);
+
+  let html='<div class="summary-grid" id="activity-summary"><div class="summary-title">'
+    +esc(activity.title)+(activity.sub?' <span style="opacity:0.6;font-weight:400">— '+esc(activity.sub)+'</span>':'')
+    +'<span class="summary-actions">';
+  if(s.startLat!==undefined)html+='<a class="map-link" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query='+s.startLat+','+s.startLon+'">View start on map ↗</a>';
+  html+='<button class="unit-toggle" onclick="toggleUnits()">'+(unitSystem==='imperial'?'mi · ft · °F':'km · m · °C')+'</button>';
+  html+='</span></div>';
+
+  if(s.profile&&s.profile.length>1){
+    html+='<div class="summary-chart"><span class="elev-label elev-max">'+fmtEleU(s.maxEleM)+'</span><span class="elev-label elev-min">'+fmtEleU(s.minEleM)+'</span>'+buildSparkline(s.profile)+'</div>';
+  }
+  items.forEach(([label,val])=>{
+    html+='<div class="stat"><span class="stat-label">'+esc(label)+'</span><span class="stat-value">'+esc(String(val))+'</span></div>';
+  });
+  html+='</div>';
+  return html;
+}
+
+function toggleUnits(){
+  unitSystem=unitSystem==='metric'?'imperial':'metric';
+  const el=document.getElementById('activity-summary');
+  if(el&&currentActivity)el.outerHTML=renderSummary(currentActivity);
+}
+
+function renderActivityTree(doc,fname,size,kind,activity){
+  nodeCount=0;maxD=0;
+  const root=doc.documentElement;
+  countXMLNodes(root,1);
+  const kb=(size/1024).toFixed(1);
+  document.getElementById('stats').innerHTML='<span>'+esc(fname)+' &middot; '+kb+' KB &middot; '+kind+' &middot; '+nodeCount+' elements &middot; max depth '+maxD+'</span>';
+  showPanel();
+  currentActivity=activity;
+  document.getElementById('tree').innerHTML=renderSummary(activity)+buildXMLHTML(root,30);
+}
+
+function parseErrLine(msg){
+  const m=msg.match(/line[:\s]+(\d+)[,\s]+col(?:umn)?[:\s]+(\d+)/i)
+    ||msg.match(/line[:\s]+(\d+)/i)
+    ||msg.match(/position\s+(\d+)/i);
+  if(!m)return null;
+  if(m[2])return{line:parseInt(m[1]),col:parseInt(m[2])};
+  return{line:parseInt(m[1]),col:1};
+}
+
+function parseErrPos(msg,raw){
+  const m=msg.match(/position\s+(\d+)/i)||msg.match(/at\s+(\d+)/i);
+    if(m){
+      let pos=Math.min(parseInt(m[1]),raw.length-1),line=1,col=1;
+	  for(let i=0;i<pos;i++){if(raw[i]==='\n'){line++;col=1;}else col++;}
+	  return{line,col};
+  }
+  return parseErrLine(msg);
+}
+
+function renderRawError(raw,errMsg,fname,size,kind) {
+  const kb=(size/1024).toFixed(1);
+  const loc=parseErrPos(errMsg,raw)||parseErrLine(errMsg);
+  showPanel();
+  document.getElementById('search').style.display='none';
+  document.getElementById('btn-expand').style.display='none';
+  document.getElementById('btn-collapse').style.display='none';
+  const locStr=loc?'Line '+loc.line+(loc.col?', column '+loc.col:''):'Position unknown';
+  document.getElementById('stats').innerHTML='<span>'+esc(fname)+' &middot; '+kb+' KB &middot; <span style="color:#dc2626">'+kind+' parse error</span></span>';
+  const lines=raw.split('\n');
+  let linesHTML='';
+  lines.forEach((line,i)=>{
+    const ln=i+1,isErr=loc&&ln===loc.line;
+    let content;
+    if(isErr&&loc&&loc.col){
+      const c0=Math.max(0,loc.col-1);
+      content=esc(line.slice(0,c0))+(line[c0]!==undefined?'<span class="err-char">'+esc(line[c0])+'</span>':'<span class="err-caret"></span>')+esc(line.slice(c0+1));
+    }else if(isErr){
+      content='<span class="err-char">'+esc(line)+'</span>';
+    }else{
+      content=esc(line);
+    }
+    linesHTML+='<div class="raw-line'+(isErr?' err-line':'')+'"><span class="ln">'+ln+'</span><span class="lc">'+content+'</span></div>';
+  });
+  document.getElementById('tree').innerHTML=
+    '<div class="banner banner-err"><span class="banner-icon">!</span><div><div class="banner-msg">'+esc(errMsg)+'</div><div class="banner-sub banner-msg">'+locStr+'</div></div></div>'
+    +'<div id="raw-wrap">'+linesHTML+'</div>';
+  if(loc)setTimeout(()=>{const el=document.querySelector('.err-line');if(el)el.scrollIntoView({block:'center',behavior:'smooth'})},80);
+}
+
+let nodeCount=0,maxD=0;
+
+function renderJSONTree(data,fname,size,escapesRemoved){
+  nodeCount=0;maxD=0;
+  countJSONNodes(data);calcJSONDepth(data,1);
+  const kb=(size/1024).toFixed(1);
+  const isArr=Array.isArray(data),topLen=Object.keys(data).length;
+  document.getElementById('stats').innerHTML='<span>'+esc(fname)+' &middot; '+kb+' KB &middot; '+nodeCount+' nodes &middot; max depth '+maxD+' &middot; '+(isArr?'array ['+topLen+']':'object {'+topLen+'}')+'</span>';
+  const warnHTML=escapesRemoved!==null
+    ?'<div class="banner banner-warn"><span class="banner-icon">&#9888;</span><div><div class="banner-msg">'+escapesRemoved+' backslash character'+(escapesRemoved===1?'':'s')+' (\\) were removed because they are assumed to be escape characters.</div></div></div>'
+    :'';
+  showPanel();
+  document.getElementById('tree').innerHTML=warnHTML+buildJSONHTML(data);
+}
+
+function countJSONNodes(v){if(v&&typeof v==='object'){const k=Object.keys(v);nodeCount+=k.length;k.forEach(k=>countJSONNodes(v[k]))}}
+function calcJSONDepth(v,d){if(v&&typeof v==='object'){maxD=Math.max(maxD,d);Object.values(v).forEach(c=>calcJSONDepth(c,d+1))}}
+
+function buildJSONHTML(v){
+  if(v===null) return '<span class="val-null">null</span>';
+  if(typeof v==='string')return '<span class="val-str">"'+esc(v)+'"</span>';
+  if(typeof v==='number')return '<span class="val-num">'+v+'</span>';
+  if(typeof v==='boolean')return '<span class="val-bool">'+v+'</span>';
+  if(typeof v==='object'){
+    const isArr=Array.isArray(v),keys=Object.keys(v);
+    if(keys.length===0)return isArr?'<span class="val-type">[ ]</span>':'<span class="val-type">{ }</span>';
+    return keys.map(k=>{
+      const child=v[k],hasChildren=child&&typeof child==='object';
+      const kHtml='<span class="key">'+(isArr?'<span class="val-num">'+k+'</span>':'"'+esc(k)+'"')+'</span><span class="colon">:</span>';
+	  if(hasChildren) {
+        const cid='n'+Math.random().toString(36).slice(2);
+        const ca=Array.isArray(child),cl=Object.keys(child).length;
+        return '<div class="row" data-id="'+cid+'"><button class="toggle" onclick="tog(\''+cid+'\')">&#9662;</button>'+kHtml+'<span class="val-type">'+(ca?'['+cl+']':'{'+cl+'}')+'</span></div><div class="node" id="'+cid+'">'+buildJSONHTML(child)+'</div>';
+      }
+      return '<div class="row"><span class="toggle" style="opacity:0.2">·</span>'+kHtml+buildJSONHTML(child)+'</div>';
+    }).join('');
+  }
+  return esc(String(v));
+}
+
+function renderXMLTree(doc,fname,size){
+  nodeCount=0;maxD=0;
+  const root=doc.documentElement;
+  countXMLNodes(root,1);
+  const kb=(size/1024).toFixed(1);
+  document.getElementById('stats').innerHTML='<span>'+esc(fname)+' &middot; '+kb+' KB &middot; '+nodeCount+' elements &middot; max depth '+maxD+'</span>';
+  showPanel();
+  document.getElementById('tree').innerHTML=buildXMLHTML(root);
+}
+
+function countXMLNodes(el,d){
+  if(!el||el.nodeType!==1) return;
+  nodeCount++;
+  maxD=Math.max(maxD,d);
+  Array.from(el.childNodes).forEach(c=>countXMLNodes(c,d+1));
+}
+
+function buildXMLHTML(node,collapseThreshold) {
+  if(!node) return '';
+  if(node.nodeType===3){
+    const t=node.textContent.trim();
+    if(!t) return '';
+    return '<div class="row"><span class="toggle" style="opacity:0.2">·</span><span class="val-str">"'+esc(t)+'"</span></div>';
+  }
+  if(node.nodeType===8){
+    const t=node.textContent.trim();
+    if(!t) return '';
+    return '<div class="row"><span class="toggle" style="opacity:0.2">·</span><span class="xml-comment">&lt;!-- '+esc(t)+' --&gt;</span></div>';
+  }
+  if(node.nodeType===4){
+    return '<div class="row"><span class="toggle" style="opacity:0.2">·</span><span class="xml-cdata">CDATA: '+esc(node.textContent.trim())+'</span></div>';
+  }
+  if(node.nodeType!==1)return '';
+
+  const attrs=Array.from(node.attributes||[]);
+  const children=Array.from(node.childNodes).filter(n=>
+    n.nodeType===1||(n.nodeType===3&&n.textContent.trim())||n.nodeType===8||n.nodeType===4
+  );
+  const tagHTML='<span class="xml-tag">&lt;'+esc(node.tagName)+'&gt;</span>';
+  const hasContent=attrs.length>0||children.length>0;
+
+  if(!hasContent){
+    return '<div class="row"><span class="toggle" style="opacity:0.2">·</span>'+tagHTML+'</div>';
+  }
+
+  const cid='n'+Math.random().toString(36).slice(2);
+  const parts=[];
+  if(attrs.length)parts.push(attrs.length+' attr'+(attrs.length>1?'s':''));
+  if(children.length)parts.push(children.length+' child'+(children.length!==1?'ren':''));
+
+  let innerHTML='';
+  attrs.forEach(a=>{
+    innerHTML+='<div class="row"><span class="toggle" style="opacity:0.2">·</span><span class="xml-attr">@'+esc(a.name)+'</span><span class="colon">:</span><span class="val-str">"'+esc(a.value)+'"</span></div>';
+  });
+  children.forEach(c=>{innerHTML+=buildXMLHTML(c,collapseThreshold)});
+
+  const collapse=collapseThreshold&&children.length>collapseThreshold;
+  return '<div class="row" data-id="'+cid+'"><button class="toggle" onclick="tog(\''+cid+'\')">'+(collapse?'&#9656;':'&#9662;')+'</button>'+tagHTML+'<span class="val-type">'+parts.join(', ')+'</span></div>'
+    +'<div class="node'+(collapse?' collapsed':'')+'" id="'+cid+'">'+innerHTML+'</div>';
+}
+
+function showPanel(){
+  document.getElementById('tree-wrap').style.display='block';
+  document.getElementById('controls').style.display='flex';
+  dz.style.display='none';
+}
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function tog(id){const el=document.getElementById(id),btn=document.querySelector('[data-id="'+id+'"] .toggle');if(!el)return;const c=el.classList.toggle('collapsed');if(btn)btn.textContent=c?'▸':'▾'}
+function setAll(c){document.querySelectorAll('.node').forEach(el=>el.classList.toggle('collapsed',c));document.querySelectorAll('.toggle').forEach(b=>{if(b.style&&b.style.opacity==='0.2')return;b.textContent=c?'▸':'▾'})}
+function filterTree(q){document.querySelectorAll('#tree .row').forEach(r=>{r.classList.remove('highlight');if(q&&r.textContent.toLowerCase().includes(q.toLowerCase()))r.classList.add('highlight')})}
+function reset(){
+  currentActivity=null;
+  document.getElementById('tree').innerHTML='';
+  document.getElementById('tree-wrap').style.display='none';
+  document.getElementById('controls').style.display='none';
+  document.getElementById('search').style.display='';
+  document.getElementById('search').value='';
+  document.getElementById('btn-expand').style.display='';
+  document.getElementById('btn-collapse').style.display='';
+  dz.style.display='block';fi.value='';
+}
+</script>
+</body>
+</html>
