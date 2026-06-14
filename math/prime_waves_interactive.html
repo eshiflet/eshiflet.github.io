@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prime Waves — interactive cosine factor test</title>
+<style>
+  :root{
+    --bg:#fafafa;
+    --panel:#ffffff;
+    --ink:#222;
+    --muted:#666;
+    --accent:#1f77b4;
+    --prime:#d62728;
+    --falsepos:#ff9800;
+    --line:#ddd;
+    --prime-band:#fff3cf;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    padding:24px;
+  }
+  .wrap{max-width:960px;margin:0 auto;}
+  h1{font-size:1.4rem;margin:0 0 4px;}
+  p.sub{color:var(--muted);margin:0 0 20px;font-size:0.95rem;line-height:1.5;}
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px 18px;
+    margin-bottom:18px;
+    box-shadow:0 1px 3px rgba(0,0,0,0.04);
+  }
+  .controls{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .controls .label{font-size:0.95rem;}
+  .controls .nval{
+    font-weight:700;
+    font-size:1.3rem;
+    min-width:2.4em;
+    text-align:center;
+    display:inline-block;
+    color:var(--accent);
+  }
+  .btn-group{display:flex;flex-direction:column;gap:4px;}
+  button.step{
+    width:36px;height:28px;
+    border:1px solid #bbb;
+    background:#fff;
+    border-radius:6px;
+    font-size:1rem;
+    cursor:pointer;
+    line-height:1;
+    transition:background 0.15s;
+  }
+  button.step:hover:not(:disabled){background:#eef4fb;border-color:var(--accent);}
+  button.step:disabled{opacity:0.35;cursor:default;}
+  input[type=range]{
+    flex:1;min-width:160px;accent-color:var(--accent);
+  }
+  .waves-legend{
+    display:flex;flex-wrap:wrap;gap:8px 14px;
+    margin-top:12px;font-size:0.85rem;
+  }
+  .waves-legend .swatch{
+    display:inline-flex;align-items:center;gap:5px;
+  }
+  .waves-legend .dot{width:12px;height:12px;border-radius:50%;display:inline-block;}
+  .waves-legend .note{color:var(--muted);font-style:italic;}
+  svg{display:block;width:100%;height:auto;}
+  .axis-label{font-size:11px;fill:var(--muted);}
+  .tick-label{font-size:10px;fill:var(--muted);}
+  .tick-label.prime{fill:var(--prime);font-weight:700;}
+  .panel-title{font-size:1rem;font-weight:600;margin:0 0 4px;}
+  .panel-sub{font-size:0.85rem;color:var(--muted);margin:0 0 10px;}
+  .legend-row{
+    display:flex;gap:18px;flex-wrap:wrap;
+    font-size:0.85rem;margin-top:10px;
+  }
+  .legend-row .chip{display:inline-flex;align-items:center;gap:6px;}
+  .legend-row .box{width:12px;height:12px;border-radius:2px;display:inline-block;}
+  #info{
+    font-size:0.92rem;line-height:1.6;
+    background:#f5f8fc;border:1px solid #e1e8f2;border-radius:8px;
+    padding:12px 14px;margin-top:14px;
+  }
+  #info b.prime{color:var(--prime);}
+  #info b.falsepos{color:var(--falsepos);}
+  code{background:#f0f0f0;padding:1px 5px;border-radius:4px;font-size:0.9em;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Prime Waves</h1>
+  <p class="sub">
+    Each wave is <code>cos(2&pi;x/n)</code>. A wave peaks at <code>1</code> exactly when
+    <code>n</code> divides <code>x</code>. Add more waves (more factors <code>n</code> tested,
+    up to 1000) and watch which numbers stop "looking prime." The x-axis range grows
+    automatically so the largest wave's full period stays in view.
+  </p>
+
+  <div class="panel">
+    <div class="controls">
+      <span class="label">Testing factors n = 2 through</span>
+      <span class="nval" id="nval">2</span>
+      <div class="btn-group">
+        <button class="step" id="up" title="Add a wave (+1)">▲</button>
+        <button class="step" id="down" title="Remove a wave (-1)">▼</button>
+      </div>
+      <input type="range" id="slider" min="2" max="1000" value="2" step="1">
+      <span class="label" id="rangeLabel" style="color:var(--muted);font-size:0.85rem;"></span>
+    </div>
+    <div class="waves-legend" id="wavesLegend"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Panel A — the waves</div>
+    <div class="panel-sub" id="subA">Dots mark where a wave hits its peak (1) — i.e. where n divides x. Shaded columns are the actual primes.</div>
+    <svg id="svgA" viewBox="0 0 900 380" preserveAspectRatio="xMidYMid meet"></svg>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Panel B — peaks per number, using only the waves shown above</div>
+    <div class="panel-sub">Height = how many of the currently-active waves (n = 2..N) peak at that x.</div>
+    <svg id="svgB" viewBox="0 0 900 280" preserveAspectRatio="xMidYMid meet"></svg>
+    <div class="legend-row">
+      <span class="chip"><span class="box" style="background:#d62728"></span> prime, 0 peaks (correct)</span>
+      <span class="chip"><span class="box" style="background:#ff9800"></span> composite, 0 peaks — not caught yet</span>
+      <span class="chip"><span class="box" style="background:#1f77b4"></span> composite, &ge;1 peak (caught)</span>
+    </div>
+    <div id="info"></div>
+  </div>
+</div>
+
+<script>
+const X_MIN = 2;
+const N_MIN = 2, N_MAX = 1000;
+const MAX_DISPLAY_WAVES = 10;   // cap on curves actually drawn in Panel A
+
+let N = 2; // current max factor (waves used for scoring: n = 2..N)
+
+// ---------- helpers ----------
+function xMaxFor(n){
+  // keep the classic 2..30 view for small N, then grow so the
+  // largest wave (period = N) shows roughly one full cycle.
+  return Math.max(30, n + 20);
+}
+
+function sieve(max){
+  const isComposite = new Array(max+1).fill(false);
+  const primes = new Set();
+  for(let i=2;i<=max;i++){
+    if(!isComposite[i]){
+      primes.add(i);
+      for(let j=i*i;j<=max;j+=i) isComposite[j]=true;
+    }
+  }
+  return primes;
+}
+
+function getTickStep(rangeWidth){
+  if(rangeWidth<=40) return 1;
+  if(rangeWidth<=100) return 5;
+  if(rangeWidth<=300) return 20;
+  if(rangeWidth<=600) return 50;
+  return 100;
+}
+
+function getTicks(xMax){
+  const step = getTickStep(xMax - X_MIN);
+  const ticks = new Set([X_MIN, xMax]);
+  for(let t=0; t<=xMax; t+=step) if(t>=X_MIN) ticks.add(t);
+  return [...ticks].sort((a,b)=>a-b);
+}
+
+function getDisplayWaves(n){
+  const all = [];
+  for(let k=2;k<=n;k++) all.push(k);
+  if(all.length<=MAX_DISPLAY_WAVES) return all;
+  const set = new Set();
+  for(let i=0;i<MAX_DISPLAY_WAVES;i++){
+    set.add(Math.round(2 + i*(n-2)/(MAX_DISPLAY_WAVES-1)));
+  }
+  return [...set].sort((a,b)=>a-b);
+}
+
+function colorForIndex(i, total){
+  const hue = (i * 360 / Math.max(total,1)) % 360;
+  return `hsl(${hue.toFixed(0)}, 65%, 45%)`;
+}
+
+function formatList(arr, maxShow){
+  if(arr.length===0) return '';
+  if(arr.length<=maxShow) return arr.join(', ');
+  return arr.slice(0,maxShow).join(', ') + `, &hellip; (${arr.length-maxShow} more)`;
+}
+
+// ---------- Panel A ----------
+function renderA(xMax, primes){
+  const W = 900, H = 380;
+  const marginL = 46, marginR = 14, marginT = 14, marginB = 34;
+  const plotW = W - marginL - marginR;
+  const plotH = H - marginT - marginB;
+  const xDomain = [X_MIN - 0.5, xMax + 0.5];
+  const yDomain = [-1.25, 1.3];
+
+  const sx = x => marginL + (x - xDomain[0]) / (xDomain[1] - xDomain[0]) * plotW;
+  const sy = y => marginT + (yDomain[1] - y) / (yDomain[1] - yDomain[0]) * plotH;
+
+  const ticks = getTicks(xMax);
+  const showTickLabels = ticks.length <= 35;
+
+  let svg = '';
+
+  // prime column shading
+  for (let p of primes){
+    if (p > xMax) continue;
+    svg += `<rect x="${sx(p-0.5).toFixed(2)}" y="${marginT}" width="${(sx(p+0.5)-sx(p-0.5)).toFixed(2)}" height="${plotH}" fill="var(--prime-band)"/>`;
+  }
+
+  // gridlines + x ticks
+  for (let x of ticks){
+    svg += `<line x1="${sx(x).toFixed(2)}" y1="${marginT}" x2="${sx(x).toFixed(2)}" y2="${marginT+plotH}" stroke="#eee" stroke-width="1"/>`;
+    if (showTickLabels){
+      const cls = primes.has(x) ? 'tick-label prime' : 'tick-label';
+      svg += `<text x="${sx(x).toFixed(2)}" y="${marginT+plotH+14}" text-anchor="middle" class="${cls}">${x}</text>`;
+    }
+  }
+  if (!showTickLabels){
+    svg += `<text x="${marginL}" y="${marginT+plotH+14}" text-anchor="start" class="tick-label">${X_MIN}</text>`;
+    svg += `<text x="${marginL+plotW}" y="${marginT+plotH+14}" text-anchor="end" class="tick-label">${xMax}</text>`;
+  }
+  // y=1 reference line
+  svg += `<line x1="${marginL}" y1="${sy(1).toFixed(2)}" x2="${marginL+plotW}" y2="${sy(1).toFixed(2)}" stroke="#bbb" stroke-width="1" stroke-dasharray="3,3"/>`;
+  // y axis labels
+  for (let y of [-1, -0.5, 0, 0.5, 1]){
+    svg += `<text x="${marginL-6}" y="${sy(y)+3}" text-anchor="end" class="axis-label">${y}</text>`;
+    svg += `<line x1="${marginL}" y1="${sy(y).toFixed(2)}" x2="${marginL+plotW}" y2="${sy(y).toFixed(2)}" stroke="#f3f3f3" stroke-width="1"/>`;
+  }
+  // axis box
+  svg += `<rect x="${marginL}" y="${marginT}" width="${plotW}" height="${plotH}" fill="none" stroke="#ccc"/>`;
+
+  // curves + peak dots (only the representative subset)
+  const displayWaves = getDisplayWaves(N);
+  displayWaves.forEach((n, i) => {
+    const color = colorForIndex(i, displayWaves.length);
+    let d = '';
+    const SAMPLES = 1500;
+    const step = (xDomain[1]-xDomain[0]) / SAMPLES;
+    for (let x = xDomain[0]; x <= xDomain[1]; x += step){
+      const y = Math.cos(2*Math.PI*x/n);
+      const px = sx(x).toFixed(2), py = sy(y).toFixed(2);
+      d += (d === '' ? `M${px},${py}` : ` L${px},${py}`);
+    }
+    svg += `<path d="${d}" fill="none" stroke="${color}" stroke-width="1.6" opacity="0.85"/>`;
+
+    // peaks
+    for (let x = n; x <= xMax; x += n){
+      if (x === n) continue; // skip trivial self-divisor
+      svg += `<circle cx="${sx(x).toFixed(2)}" cy="${sy(1).toFixed(2)}" r="4" fill="${color}" stroke="#fff" stroke-width="1"/>`;
+    }
+  });
+
+  svg += `<text x="${marginL/2-4}" y="${marginT+plotH/2}" text-anchor="middle" class="axis-label" transform="rotate(-90 ${marginL/2-4} ${marginT+plotH/2})">cos(2&#960;x/n)</text>`;
+
+  document.getElementById('svgA').innerHTML = svg;
+  return displayWaves;
+}
+
+// ---------- Panel B ----------
+function renderB(xMax, primes){
+  const W = 900, H = 280;
+  const marginL = 46, marginR = 14, marginT = 14, marginB = 34;
+  const plotW = W - marginL - marginR;
+  const plotH = H - marginT - marginB;
+
+  const nBins = xMax - X_MIN + 1;
+  const xs = [];
+  for (let x = X_MIN; x <= xMax; x++) xs.push(x);
+
+  const counts = xs.map(x => {
+    let c = 0;
+    const upper = Math.min(N, x-1);
+    for (let n = 2; n <= upper; n++) if (x % n === 0) c++;
+    return c;
+  });
+  const yMax = Math.max(3, Math.max(...counts) + 1);
+
+  const sx = x => marginL + (x - (X_MIN-0.5)) / ((xMax+0.5) - (X_MIN-0.5)) * plotW;
+  const sy = c => marginT + (yMax - c) / yMax * plotH;
+  const barW = Math.max(plotW / nBins * 0.62, 0.5);
+
+  const ticks = getTicks(xMax);
+  const dense = nBins > 80; // too many bins for per-bar labels
+
+  let svg = '';
+
+  // prime shading
+  for (let p of primes){
+    if (p > xMax) continue;
+    svg += `<rect x="${sx(p-0.5).toFixed(2)}" y="${marginT}" width="${(sx(p+0.5)-sx(p-0.5)).toFixed(2)}" height="${plotH}" fill="var(--prime-band)"/>`;
+  }
+  // y gridlines
+  for (let c = 0; c <= yMax; c++){
+    svg += `<line x1="${marginL}" y1="${sy(c).toFixed(2)}" x2="${marginL+plotW}" y2="${sy(c).toFixed(2)}" stroke="#f3f3f3" stroke-width="1"/>`;
+    svg += `<text x="${marginL-6}" y="${sy(c)+3}" text-anchor="end" class="axis-label">${c}</text>`;
+  }
+  svg += `<rect x="${marginL}" y="${marginT}" width="${plotW}" height="${plotH}" fill="none" stroke="#ccc"/>`;
+
+  // bars
+  const falsePositives = [];
+  const truePrimesShown = [];
+  xs.forEach((x,i) => {
+    const c = counts[i];
+    let color;
+    if (c === 0){
+      color = primes.has(x) ? '#d62728' : '#ff9800';
+      if (primes.has(x)) truePrimesShown.push(x); else falsePositives.push(x);
+    } else {
+      color = '#1f77b4';
+    }
+    const bx = sx(x) - barW/2;
+    const by = sy(c);
+    const bh = (marginT+plotH) - by;
+    if (bh > 0.2){
+      svg += `<rect x="${bx.toFixed(2)}" y="${by.toFixed(2)}" width="${barW.toFixed(2)}" height="${bh.toFixed(2)}" fill="${color}"/>`;
+    }
+    if (!dense){
+      svg += `<text x="${sx(x).toFixed(2)}" y="${(by-4).toFixed(2)}" text-anchor="middle" font-size="10" fill="${color}" font-weight="700">${c}</text>`;
+    }
+  });
+
+  // x tick labels
+  const showTickLabels = ticks.length <= 35;
+  for (let x of ticks){
+    if (showTickLabels){
+      const cls = primes.has(x) ? 'tick-label prime' : 'tick-label';
+      svg += `<text x="${sx(x).toFixed(2)}" y="${marginT+plotH+14}" text-anchor="middle" class="${cls}">${x}</text>`;
+    }
+  }
+  if (!showTickLabels){
+    svg += `<text x="${marginL}" y="${marginT+plotH+14}" text-anchor="start" class="tick-label">${X_MIN}</text>`;
+    svg += `<text x="${marginL+plotW}" y="${marginT+plotH+14}" text-anchor="end" class="tick-label">${xMax}</text>`;
+  }
+
+  svg += `<text x="${marginL/2-4}" y="${marginT+plotH/2}" text-anchor="middle" class="axis-label" transform="rotate(-90 ${marginL/2-4} ${marginT+plotH/2})"># peaks</text>`;
+
+  document.getElementById('svgB').innerHTML = svg;
+  return { falsePositives, truePrimesShown };
+}
+
+// ---------- Wave legend ----------
+function renderLegend(displayWaves){
+  let html = '';
+  displayWaves.forEach((n,i) => {
+    html += `<span class="swatch"><span class="dot" style="background:${colorForIndex(i, displayWaves.length)}"></span> n = ${n}</span>`;
+  });
+  const totalWaves = N - 1;
+  if (totalWaves > displayWaves.length){
+    html += `<span class="note">+ ${totalWaves - displayWaves.length} more waves used in Panel B (not drawn, for clarity)</span>`;
+  }
+  document.getElementById('wavesLegend').innerHTML = html;
+}
+
+function render(){
+  const xMax = xMaxFor(N);
+  const primes = sieve(xMax);
+
+  document.getElementById('nval').textContent = N;
+  document.getElementById('slider').value = N;
+  document.getElementById('up').disabled = (N >= N_MAX);
+  document.getElementById('down').disabled = (N <= N_MIN);
+  document.getElementById('rangeLabel').textContent =
+    `(${N-1} wave${N-1===1?'':'s'} active · x-axis 2–${xMax})`;
+
+  const displayWaves = renderA(xMax, primes);
+  renderLegend(displayWaves);
+  const { falsePositives, truePrimesShown } = renderB(xMax, primes);
+
+  const info = document.getElementById('info');
+  if (falsePositives.length === 0){
+    info.innerHTML = `With waves n = 2&hellip;${N} (x-axis up to ${xMax}), every composite has been caught &mdash;
+      only the true primes show zero peaks: <b class="prime">${formatList(truePrimesShown, 20)}</b>.`;
+  } else {
+    info.innerHTML = `With waves n = 2&hellip;${N}, these numbers still show <b>0 peaks</b> (look prime to this test):
+      <b class="prime">${formatList(truePrimesShown, 20)}</b> (actually prime) and
+      <b class="falsepos">${formatList(falsePositives, 20)}</b> (composite, but not caught yet &mdash; add more waves).`;
+  }
+}
+
+document.getElementById('up').addEventListener('click', () => { if (N < N_MAX){ N++; render(); } });
+document.getElementById('down').addEventListener('click', () => { if (N > N_MIN){ N--; render(); } });
+document.getElementById('slider').addEventListener('input', (e) => { N = parseInt(e.target.value,10); render(); });
+
+render();
+</script>
+</body>
+</html>

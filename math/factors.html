@@ -17,6 +17,95 @@
       .sidebar-nav {
         padding: 9px 0;
       }
+
+      .factor-grid {
+        display: grid;
+        grid-template-columns: repeat(10, 1fr);
+        gap: 6px;
+        margin-bottom: 30px;
+      }
+      .factor-card {
+        background: #fff;
+        border: 1px solid #e3e6ea;
+        border-radius: 8px;
+        padding: 8px 4px;
+        text-align: center;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+      }
+      .factor-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        border-color: #b6d4fe;
+      }
+      .factor-card.prime {
+        background: #e7f1ff;
+        border-color: #9ec5fe;
+      }
+      .factor-card .num {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: #212529;
+        margin-bottom: 4px;
+      }
+      .factor-card.prime .num {
+        color: #0d6efd;
+      }
+      .factor-card .pairs {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        font-size: 0.72rem;
+        color: #6c757d;
+      }
+      .legend {
+        display: flex;
+        gap: 24px;
+        align-items: center;
+        margin-bottom: 16px;
+        font-size: 0.9rem;
+        color: #495057;
+      }
+      .legend-swatch {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border-radius: 4px;
+        vertical-align: middle;
+        margin-right: 6px;
+        border: 1px solid #e3e6ea;
+      }
+      .legend-swatch.prime {
+        background: #e7f1ff;
+        border-color: #9ec5fe;
+      }
+      .related-card {
+        background: #f8f9fa;
+        border-left: 4px solid #0d6efd;
+        border-radius: 6px;
+        padding: 16px 20px;
+        margin: 8px 0 30px;
+      }
+      .related-card h2 {
+        margin-top: 0;
+        font-size: 1.1rem;
+      }
+      @media (max-width: 768px) {
+        .factor-grid {
+          grid-template-columns: repeat(5, 1fr);
+        }
+        .factor-card .num {
+          font-size: 1rem;
+        }
+        .factor-card .pairs {
+          font-size: 0.65rem;
+        }
+      }
+      @media (max-width: 480px) {
+        .factor-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
     </style>
 
     <!-- Le fav and touch icons -->
@@ -60,285 +149,422 @@
     <div class="container">
 
       <h1>Factor Pairs for Integers 1 to 100</h1><br>
-	  <br>
-	  
-	  <p>
-      The number pairs below each integer in the chart are its factors. An integer with only one factor pair, 1 and iteself, is a prime number.</p><br>
-	
-<table class="table table-bordered">
 
-  <tr class="table-info">
-    <td><strong>1</strong></td>
-	<td><strong>2</strong></td>
-    <td><strong>3</strong></td>
-	<td><strong>4</strong></td>
-    <td><strong>5</strong></td>
-	<td><strong>6</strong></td>
-    <td><strong>7</strong></td>
-	<td><strong>8</strong></td>
-    <td><strong>9</strong></td>
-	<td><strong>10</strong></td>
-  </tr>
-  <tr>
-    <td>1-1</td>	<td>1-2</td>	<td>1-3</td>	<td>1-4</td>	<td>1-5</td>	<td>1-6</td>	<td>1-7</td>	<td>1-8</td>	<td>1-9</td>	<td>1-10</td>
-  </tr>
-  <tr>
-    <td></td>	<td></td>	<td></td>	<td>2-2</td>	<td></td>	<td>2-3</td>	<td></td>	<td>2-4</td>	<td>3-3</td>	<td>2-5</td>
-  </tr>
-  
-  <tr class="table-info">
-    <td><strong>11</strong></td>
-	<td><strong>12</strong></td>
-    <td><strong>13</strong></td>
-	<td><strong>14</strong></td>
-    <td><strong>15</strong></td>
-	<td><strong>16</strong></td>
-    <td><strong>17</strong></td>
-	<td><strong>18</strong></td>
-    <td><strong>19</strong></td>
-	<td><strong>20</strong></td>
-  </tr>
-  <tr>
-    <td>1-11</td>	<td>1-12</td>	<td>1-13</td>	<td>1-14</td>	<td>1-15</td>	<td>1-16</td>	<td>1-17</td>	<td>1-18</td>	<td>1-19</td>	<td>1-20</td>
-  </tr>
-  <tr>
-    <td></td>		<td>2-6</td>	<td></td>		<td>2-7</td>	<td>3-5</td>	<td>2-8</td>	<td></td>		<td>2-9</td>	<td></td>		<td>2-10</td>
-  </tr>
-  <tr>
-    <td></td>		<td>3-4</td>	<td></td>		<td></td>		<td></td>		<td>4-4</td>	<td></td>		<td>3-6</td>	<td></td>		<td>4-5</td>
-  </tr>
+      <p>
+      Each card below shows an integer and all of the factor pairs that multiply to make it. An integer with only one factor pair, 1 and itself, is a prime number &mdash; those cards are highlighted in blue.</p>
 
-  <tr class="table-info">
-    <td><strong>21</strong></td>
-	<td><strong>22</strong></td>
-    <td><strong>23</strong></td>
-	<td><strong>24</strong></td>
-    <td><strong>25</strong></td>
-	<td><strong>26</strong></td>
-    <td><strong>27</strong></td>
-	<td><strong>28</strong></td>
-    <td><strong>29</strong></td>
-	<td><strong>30</strong></td>
-  </tr>
-  <tr>
-    <td>1-21</td>	<td>1-22</td>	<td>1-23</td>	<td>1-24</td>	<td>1-25</td>	<td>1-26</td>	<td>1-27</td>	<td>1-28</td>	<td>1-29</td>	<td>1-30</td>
-  </tr>
-  <tr>
-    <td>3-7</td>	<td>2-11</td>	<td></td>		<td>2-12</td>	<td>5-5</td>	<td>2-13</td>	<td>3-9</td>	<td>2-14</td>	<td></td>		<td>2-15</td>
-  </tr>
-  <tr>
-    <td></td>		<td></td>		<td></td>		<td>3-8</td>	<td></td>		<td></td>		<td></td>		<td>4-7</td>	<td></td>		<td>3-10</td>
-  </tr>
-  <tr>
-    <td></td>		<td></td>		<td></td>		<td>4-6</td>	<td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td>5-6</td>
-  </tr>
+      <div class="related-card">
+        <h2>Explore primes visually</h2>
+        <p class="mb-0">Want a more intuitive feel for why a number is prime? Check out <a href="prime_waves_interactive.html">Prime Waves</a>, an interactive tool that tests integers for primality by overlapping cosine waves &mdash; if all the waves but one cancel out, the number is prime.</p>
+      </div>
 
-  <tr class="table-info">
-    <td><strong>31</strong></td>
-	<td><strong>32</strong></td>
-    <td><strong>33</strong></td>
-	<td><strong>34</strong></td>
-    <td><strong>35</strong></td>
-	<td><strong>36</strong></td>
-    <td><strong>37</strong></td>
-	<td><strong>38</strong></td>
-    <td><strong>39</strong></td>
-	<td><strong>40</strong></td>
-  </tr>
-  <tr>
-    <td>1-31</td>	<td>1-32</td>	<td>1-33</td>	<td>1-34</td>	<td>1-35</td>	<td>1-36</td>	<td>1-37</td>	<td>1-38</td>	<td>1-39</td>	<td>1-40</td>
-  </tr>
-  <tr>
-    <td></td>		<td>2-16</td>	<td>3-11</td>	<td>2-17</td>	<td>5-7</td>	<td>2-18</td>	<td></td>		<td>2-19</td>	<td>3-13</td>	<td>2-20</td>
-  </tr>
-  <tr>
-    <td></td>		<td>4-8</td>	<td></td>		<td></td>		<td></td>		<td>3-12</td>	<td></td>		<td></td>		<td></td>		<td>4-10</td>
-  </tr>
-  <tr>
-    <td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td>4-9</td>	<td></td>		<td></td>		<td></td>		<td>5-8</td>
-  </tr>
-  <tr>
-    <td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td>6-6</td>	<td></td>		<td></td>		<td></td>		<td></td>
-  </tr>
+      <div class="legend">
+        <span><span class="legend-swatch prime"></span>Prime number</span>
+        <span><span class="legend-swatch"></span>Composite number</span>
+      </div>
 
-  <tr class="table-info">
-    <td><strong>41</strong></td>
-	<td><strong>42</strong></td>
-    <td><strong>43</strong></td>
-	<td><strong>44</strong></td>
-    <td><strong>45</strong></td>
-	<td><strong>46</strong></td>
-    <td><strong>47</strong></td>
-	<td><strong>48</strong></td>
-    <td><strong>49</strong></td>
-	<td><strong>50</strong></td>
-  </tr>
-  <tr>
-    <td>1-41</td>	<td>1-42</td>	<td>1-43</td>	<td>1-44</td>	<td>1-45</td>	<td>1-46</td>	<td>1-47</td>	<td>1-48</td>	<td>1-49</td>	<td>1-50</td>
-  </tr>
-  <tr>
-    <td></td>		<td>2-21</td>	<td></td>		<td>2-22</td>	<td>3-15</td>	<td>2-23</td>	<td></td>		<td>2-24</td>	<td>7-7</td>	<td>2-25</td>
-  </tr>
-  <tr>
-    <td></td>		<td>3-14</td>	<td></td>		<td>4-11</td>	<td>5-9</td>	<td></td>		<td></td>		<td>3-16</td>	<td></td>		<td>5-10</td>
-  </tr>
-  <tr>
-    <td></td>		<td>6-7</td>	<td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td>4-12</td>	<td></td>		<td></td>
-  </tr>
-  <tr>
-    <td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td>6-8</td>	<td></td>		<td></td>
-  </tr>
-
-  <tr class="table-info">
-    <td><strong>51</strong></td>
-	<td><strong>52</strong></td>
-    <td><strong>53</strong></td>
-	<td><strong>54</strong></td>
-    <td><strong>55</strong></td>
-	<td><strong>56</strong></td>
-    <td><strong>57</strong></td>
-	<td><strong>58</strong></td>
-    <td><strong>59</strong></td>
-	<td><strong>60</strong></td>
-  </tr>
-  <tr>
-    <td>1-51</td>	<td>1-52</td>	<td>1-53</td>	<td>1-54</td>	<td>1-55</td>	<td>1-56</td>	<td>1-57</td>	<td>1-58</td>	<td>1-59</td>	<td>1-60</td>
-  </tr>
-  <tr>
-    <td>3-17</td>	<td>2-26</td>	<td></td>		<td>2-27</td>	<td>5-11</td>	<td>2-28</td>	<td>3-19</td>	<td>2-29</td>	<td></td>		<td>2-30</td>
-  </tr>
-  <tr>
-    <td></td>		<td>4-13</td>	<td></td>		<td>3-18</td>	<td></td>		<td>4-14</td>	<td></td>		<td></td>		<td></td>		<td>3-20</td>
-  </tr>
-  <tr>
-    <td></td>		<td></td>		<td></td>		<td>6-9</td>	<td></td>		<td>7-8</td>	<td></td>		<td></td>		<td></td>		<td>4-15</td>
-  </tr>
-  <tr>
-    <td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td>5-12</td>
-  </tr>
-  <tr>
-    <td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td>6-10</td>
-  </tr>
-
-  <tr class="table-info">
-    <td><strong>61</strong></td>
-	<td><strong>62</strong></td>
-    <td><strong>63</strong></td>
-	<td><strong>64</strong></td>
-    <td><strong>65</strong></td>
-	<td><strong>66</strong></td>
-    <td><strong>67</strong></td>
-	<td><strong>68</strong></td>
-    <td><strong>69</strong></td>
-	<td><strong>70</strong></td>
-  </tr>
-  <tr>
-    <td>1-61</td>	<td>1-62</td>	<td>1-63</td>	<td>1-64</td>	<td>1-65</td>	<td>1-66</td>	<td>1-67</td>	<td>1-68</td>	<td>1-69</td>	<td>1-70</td>
-  </tr>
-  <tr>
-    <td></td>		<td>2-31</td>	<td>3-21</td>	<td>2-32</td>	<td>5-13</td>	<td>2-33</td>	<td></td>		<td>2-34</td>	<td>3-23</td>	<td>2-35</td>
-  </tr>
-  <tr>
-    <td></td>		<td></td>		<td>7-9</td>	<td>4-16</td>	<td></td>		<td>3-22</td>	<td></td>		<td></td>		<td>4-17</td>	<td>5-14</td>
-  </tr>
-  <tr>
-    <td></td>		<td></td>		<td></td>		<td>8-8</td>	<td></td>		<td>6-11</td>	<td></td>		<td></td>		<td></td>		<td>7-10</td>
-  </tr>
-
-  <tr class="table-info">
-    <td><strong>71</strong></td>
-	<td><strong>72</strong></td>
-    <td><strong>73</strong></td>
-	<td><strong>74</strong></td>
-    <td><strong>75</strong></td>
-	<td><strong>76</strong></td>
-    <td><strong>77</strong></td>
-	<td><strong>78</strong></td>
-    <td><strong>79</strong></td>
-	<td><strong>80</strong></td>
-  </tr>
-  <tr>
-    <td>1-71</td>	<td>1-72</td>	<td>1-73</td>	<td>1-74</td>	<td>1-75</td>	<td>1-76</td>	<td>1-77</td>	<td>1-78</td>	<td>1-79</td>	<td>1-80</td>
-  </tr>
-  <tr>
-    <td></td>		<td>2-36</td>	<td></td>		<td>2-37</td>	<td>3-25</td>	<td>2-38</td>	<td>7-11</td>	<td>2-39</td>	<td></td>		<td>2-40</td>
-  </tr>
-  <tr>
-    <td></td>		<td>3-24</td>	<td></td>		<td></td>		<td>5-15</td>	<td>4-19</td>	<td></td>		<td>3-26</td>	<td></td>		<td>4-20</td>
-  </tr>
-  <tr>
-    <td></td>		<td>4-18</td>	<td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td>6-13</td>	<td></td>		<td>5-16</td>
-  </tr>
-  <tr>
-    <td></td>		<td>6-12</td>	<td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td>8-10</td>
-  </tr>
-  <tr>
-    <td></td>		<td>8-9</td>	<td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td></td>
-  </tr>
-
-  <tr class="table-info">
-    <td><strong>81</strong></td>
-	<td><strong>82</strong></td>
-    <td><strong>83</strong></td>
-	<td><strong>84</strong></td>
-    <td><strong>85</strong></td>
-	<td><strong>86</strong></td>
-    <td><strong>87</strong></td>
-	<td><strong>88</strong></td>
-    <td><strong>89</strong></td>
-	<td><strong>90</strong></td>
-  </tr>
-  <tr>
-    <td>1-81</td>	<td>1-82</td>	<td>1-83</td>	<td>1-84</td>	<td>1-85</td>	<td>1-86</td>	<td>1-87</td>	<td>1-88</td>	<td>1-89</td>	<td>1-90</td>
-  </tr>
-  <tr>
-    <td>3-27</td>	<td>2-41</td>	<td></td>		<td>2-42</td>	<td>5-17</td>	<td>2-43</td>	<td>3-29</td>	<td>2-44</td>	<td></td>		<td>2-45</td>
-  </tr>
-  <tr>
-    <td>9-9</td>	<td></td>		<td></td>		<td>3-28</td>	<td></td>		<td></td>		<td></td>		<td>4-22</td>	<td></td>		<td>3-30</td>
-  </tr>
-  <tr>
-    <td></td>		<td></td>		<td></td>		<td>4-21</td>	<td></td>		<td></td>		<td></td>		<td>8-11</td>	<td></td>		<td>5-18</td>
-  </tr>
-  <tr>
-    <td></td>		<td></td>		<td></td>		<td>6-14</td>	<td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td>6-15</td>
-  </tr>
-  <tr>
-    <td></td>		<td></td>		<td></td>		<td>7-12</td>	<td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td>9-10</td>
-  </tr>
-
-  <tr class="table-info">
-    <td><strong>91</strong></td>
-	<td><strong>92</strong></td>
-    <td><strong>93</strong></td>
-	<td><strong>94</strong></td>
-    <td><strong>95</strong></td>
-	<td><strong>96</strong></td>
-    <td><strong>97</strong></td>
-	<td><strong>98</strong></td>
-    <td><strong>99</strong></td>
-	<td><strong>100</strong></td>
-  </tr>
-  <tr>
-    <td>1-91</td>	<td>1-92</td>	<td>1-93</td>	<td>1-94</td>	<td>1-95</td>	<td>1-96</td>	<td>1-97</td>	<td>1-98</td>	<td>1-99</td>	<td>1-100</td>
-  </tr>
-  <tr>
-    <td>7-13</td>	<td>2-46</td>	<td>3-31</td>	<td>2-47</td>	<td>5-19</td>	<td>2-48</td>	<td></td>		<td>2-49</td>	<td>3-33</td>	<td>2-50</td>
-  </tr>
-  <tr>
-    <td></td>		<td>4-23</td>	<td></td>		<td></td>		<td></td>		<td>3-32</td>	<td></td>		<td>7-14</td>	<td>9-11</td>	<td>4-25</td>
-  </tr>
-  <tr>
-    <td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td>4-24</td>	<td></td>		<td></td>		<td></td>		<td>5-20</td>
-  </tr>
-  <tr>
-    <td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td>6-16</td>	<td></td>		<td></td>		<td></td>		<td>10-10</td>
-  </tr>
-  <tr>
-    <td></td>		<td></td>		<td></td>		<td></td>		<td></td>		<td>8-12</td>	<td></td>		<td></td>		<td></td>		<td></td>
-  </tr>
-
-</table>
+      <div class="factor-grid">
+      <div class="factor-card">
+        <div class="num">1</div>
+        <div class="pairs"><span class="pair">1&times;1</span></div>
+      </div>
+      <div class="factor-card prime">
+        <div class="num">2</div>
+        <div class="pairs"><span class="pair">1&times;2</span></div>
+      </div>
+      <div class="factor-card prime">
+        <div class="num">3</div>
+        <div class="pairs"><span class="pair">1&times;3</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">4</div>
+        <div class="pairs"><span class="pair">1&times;4</span><span class="pair">2&times;2</span></div>
+      </div>
+      <div class="factor-card prime">
+        <div class="num">5</div>
+        <div class="pairs"><span class="pair">1&times;5</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">6</div>
+        <div class="pairs"><span class="pair">1&times;6</span><span class="pair">2&times;3</span></div>
+      </div>
+      <div class="factor-card prime">
+        <div class="num">7</div>
+        <div class="pairs"><span class="pair">1&times;7</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">8</div>
+        <div class="pairs"><span class="pair">1&times;8</span><span class="pair">2&times;4</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">9</div>
+        <div class="pairs"><span class="pair">1&times;9</span><span class="pair">3&times;3</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">10</div>
+        <div class="pairs"><span class="pair">1&times;10</span><span class="pair">2&times;5</span></div>
+      </div>
+      <div class="factor-card prime">
+        <div class="num">11</div>
+        <div class="pairs"><span class="pair">1&times;11</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">12</div>
+        <div class="pairs"><span class="pair">1&times;12</span><span class="pair">2&times;6</span><span class="pair">3&times;4</span></div>
+      </div>
+      <div class="factor-card prime">
+        <div class="num">13</div>
+        <div class="pairs"><span class="pair">1&times;13</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">14</div>
+        <div class="pairs"><span class="pair">1&times;14</span><span class="pair">2&times;7</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">15</div>
+        <div class="pairs"><span class="pair">1&times;15</span><span class="pair">3&times;5</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">16</div>
+        <div class="pairs"><span class="pair">1&times;16</span><span class="pair">2&times;8</span><span class="pair">4&times;4</span></div>
+      </div>
+      <div class="factor-card prime">
+        <div class="num">17</div>
+        <div class="pairs"><span class="pair">1&times;17</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">18</div>
+        <div class="pairs"><span class="pair">1&times;18</span><span class="pair">2&times;9</span><span class="pair">3&times;6</span></div>
+      </div>
+      <div class="factor-card prime">
+        <div class="num">19</div>
+        <div class="pairs"><span class="pair">1&times;19</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">20</div>
+        <div class="pairs"><span class="pair">1&times;20</span><span class="pair">2&times;10</span><span class="pair">4&times;5</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">21</div>
+        <div class="pairs"><span class="pair">1&times;21</span><span class="pair">3&times;7</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">22</div>
+        <div class="pairs"><span class="pair">1&times;22</span><span class="pair">2&times;11</span></div>
+      </div>
+      <div class="factor-card prime">
+        <div class="num">23</div>
+        <div class="pairs"><span class="pair">1&times;23</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">24</div>
+        <div class="pairs"><span class="pair">1&times;24</span><span class="pair">2&times;12</span><span class="pair">3&times;8</span><span class="pair">4&times;6</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">25</div>
+        <div class="pairs"><span class="pair">1&times;25</span><span class="pair">5&times;5</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">26</div>
+        <div class="pairs"><span class="pair">1&times;26</span><span class="pair">2&times;13</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">27</div>
+        <div class="pairs"><span class="pair">1&times;27</span><span class="pair">3&times;9</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">28</div>
+        <div class="pairs"><span class="pair">1&times;28</span><span class="pair">2&times;14</span><span class="pair">4&times;7</span></div>
+      </div>
+      <div class="factor-card prime">
+        <div class="num">29</div>
+        <div class="pairs"><span class="pair">1&times;29</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">30</div>
+        <div class="pairs"><span class="pair">1&times;30</span><span class="pair">2&times;15</span><span class="pair">3&times;10</span><span class="pair">5&times;6</span></div>
+      </div>
+      <div class="factor-card prime">
+        <div class="num">31</div>
+        <div class="pairs"><span class="pair">1&times;31</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">32</div>
+        <div class="pairs"><span class="pair">1&times;32</span><span class="pair">2&times;16</span><span class="pair">4&times;8</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">33</div>
+        <div class="pairs"><span class="pair">1&times;33</span><span class="pair">3&times;11</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">34</div>
+        <div class="pairs"><span class="pair">1&times;34</span><span class="pair">2&times;17</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">35</div>
+        <div class="pairs"><span class="pair">1&times;35</span><span class="pair">5&times;7</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">36</div>
+        <div class="pairs"><span class="pair">1&times;36</span><span class="pair">2&times;18</span><span class="pair">3&times;12</span><span class="pair">4&times;9</span><span class="pair">6&times;6</span></div>
+      </div>
+      <div class="factor-card prime">
+        <div class="num">37</div>
+        <div class="pairs"><span class="pair">1&times;37</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">38</div>
+        <div class="pairs"><span class="pair">1&times;38</span><span class="pair">2&times;19</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">39</div>
+        <div class="pairs"><span class="pair">1&times;39</span><span class="pair">3&times;13</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">40</div>
+        <div class="pairs"><span class="pair">1&times;40</span><span class="pair">2&times;20</span><span class="pair">4&times;10</span><span class="pair">5&times;8</span></div>
+      </div>
+      <div class="factor-card prime">
+        <div class="num">41</div>
+        <div class="pairs"><span class="pair">1&times;41</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">42</div>
+        <div class="pairs"><span class="pair">1&times;42</span><span class="pair">2&times;21</span><span class="pair">3&times;14</span><span class="pair">6&times;7</span></div>
+      </div>
+      <div class="factor-card prime">
+        <div class="num">43</div>
+        <div class="pairs"><span class="pair">1&times;43</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">44</div>
+        <div class="pairs"><span class="pair">1&times;44</span><span class="pair">2&times;22</span><span class="pair">4&times;11</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">45</div>
+        <div class="pairs"><span class="pair">1&times;45</span><span class="pair">3&times;15</span><span class="pair">5&times;9</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">46</div>
+        <div class="pairs"><span class="pair">1&times;46</span><span class="pair">2&times;23</span></div>
+      </div>
+      <div class="factor-card prime">
+        <div class="num">47</div>
+        <div class="pairs"><span class="pair">1&times;47</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">48</div>
+        <div class="pairs"><span class="pair">1&times;48</span><span class="pair">2&times;24</span><span class="pair">3&times;16</span><span class="pair">4&times;12</span><span class="pair">6&times;8</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">49</div>
+        <div class="pairs"><span class="pair">1&times;49</span><span class="pair">7&times;7</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">50</div>
+        <div class="pairs"><span class="pair">1&times;50</span><span class="pair">2&times;25</span><span class="pair">5&times;10</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">51</div>
+        <div class="pairs"><span class="pair">1&times;51</span><span class="pair">3&times;17</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">52</div>
+        <div class="pairs"><span class="pair">1&times;52</span><span class="pair">2&times;26</span><span class="pair">4&times;13</span></div>
+      </div>
+      <div class="factor-card prime">
+        <div class="num">53</div>
+        <div class="pairs"><span class="pair">1&times;53</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">54</div>
+        <div class="pairs"><span class="pair">1&times;54</span><span class="pair">2&times;27</span><span class="pair">3&times;18</span><span class="pair">6&times;9</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">55</div>
+        <div class="pairs"><span class="pair">1&times;55</span><span class="pair">5&times;11</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">56</div>
+        <div class="pairs"><span class="pair">1&times;56</span><span class="pair">2&times;28</span><span class="pair">4&times;14</span><span class="pair">7&times;8</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">57</div>
+        <div class="pairs"><span class="pair">1&times;57</span><span class="pair">3&times;19</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">58</div>
+        <div class="pairs"><span class="pair">1&times;58</span><span class="pair">2&times;29</span></div>
+      </div>
+      <div class="factor-card prime">
+        <div class="num">59</div>
+        <div class="pairs"><span class="pair">1&times;59</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">60</div>
+        <div class="pairs"><span class="pair">1&times;60</span><span class="pair">2&times;30</span><span class="pair">3&times;20</span><span class="pair">4&times;15</span><span class="pair">5&times;12</span><span class="pair">6&times;10</span></div>
+      </div>
+      <div class="factor-card prime">
+        <div class="num">61</div>
+        <div class="pairs"><span class="pair">1&times;61</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">62</div>
+        <div class="pairs"><span class="pair">1&times;62</span><span class="pair">2&times;31</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">63</div>
+        <div class="pairs"><span class="pair">1&times;63</span><span class="pair">3&times;21</span><span class="pair">7&times;9</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">64</div>
+        <div class="pairs"><span class="pair">1&times;64</span><span class="pair">2&times;32</span><span class="pair">4&times;16</span><span class="pair">8&times;8</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">65</div>
+        <div class="pairs"><span class="pair">1&times;65</span><span class="pair">5&times;13</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">66</div>
+        <div class="pairs"><span class="pair">1&times;66</span><span class="pair">2&times;33</span><span class="pair">3&times;22</span><span class="pair">6&times;11</span></div>
+      </div>
+      <div class="factor-card prime">
+        <div class="num">67</div>
+        <div class="pairs"><span class="pair">1&times;67</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">68</div>
+        <div class="pairs"><span class="pair">1&times;68</span><span class="pair">2&times;34</span><span class="pair">4&times;17</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">69</div>
+        <div class="pairs"><span class="pair">1&times;69</span><span class="pair">3&times;23</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">70</div>
+        <div class="pairs"><span class="pair">1&times;70</span><span class="pair">2&times;35</span><span class="pair">5&times;14</span><span class="pair">7&times;10</span></div>
+      </div>
+      <div class="factor-card prime">
+        <div class="num">71</div>
+        <div class="pairs"><span class="pair">1&times;71</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">72</div>
+        <div class="pairs"><span class="pair">1&times;72</span><span class="pair">2&times;36</span><span class="pair">3&times;24</span><span class="pair">4&times;18</span><span class="pair">6&times;12</span><span class="pair">8&times;9</span></div>
+      </div>
+      <div class="factor-card prime">
+        <div class="num">73</div>
+        <div class="pairs"><span class="pair">1&times;73</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">74</div>
+        <div class="pairs"><span class="pair">1&times;74</span><span class="pair">2&times;37</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">75</div>
+        <div class="pairs"><span class="pair">1&times;75</span><span class="pair">3&times;25</span><span class="pair">5&times;15</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">76</div>
+        <div class="pairs"><span class="pair">1&times;76</span><span class="pair">2&times;38</span><span class="pair">4&times;19</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">77</div>
+        <div class="pairs"><span class="pair">1&times;77</span><span class="pair">7&times;11</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">78</div>
+        <div class="pairs"><span class="pair">1&times;78</span><span class="pair">2&times;39</span><span class="pair">3&times;26</span><span class="pair">6&times;13</span></div>
+      </div>
+      <div class="factor-card prime">
+        <div class="num">79</div>
+        <div class="pairs"><span class="pair">1&times;79</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">80</div>
+        <div class="pairs"><span class="pair">1&times;80</span><span class="pair">2&times;40</span><span class="pair">4&times;20</span><span class="pair">5&times;16</span><span class="pair">8&times;10</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">81</div>
+        <div class="pairs"><span class="pair">1&times;81</span><span class="pair">3&times;27</span><span class="pair">9&times;9</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">82</div>
+        <div class="pairs"><span class="pair">1&times;82</span><span class="pair">2&times;41</span></div>
+      </div>
+      <div class="factor-card prime">
+        <div class="num">83</div>
+        <div class="pairs"><span class="pair">1&times;83</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">84</div>
+        <div class="pairs"><span class="pair">1&times;84</span><span class="pair">2&times;42</span><span class="pair">3&times;28</span><span class="pair">4&times;21</span><span class="pair">6&times;14</span><span class="pair">7&times;12</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">85</div>
+        <div class="pairs"><span class="pair">1&times;85</span><span class="pair">5&times;17</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">86</div>
+        <div class="pairs"><span class="pair">1&times;86</span><span class="pair">2&times;43</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">87</div>
+        <div class="pairs"><span class="pair">1&times;87</span><span class="pair">3&times;29</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">88</div>
+        <div class="pairs"><span class="pair">1&times;88</span><span class="pair">2&times;44</span><span class="pair">4&times;22</span><span class="pair">8&times;11</span></div>
+      </div>
+      <div class="factor-card prime">
+        <div class="num">89</div>
+        <div class="pairs"><span class="pair">1&times;89</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">90</div>
+        <div class="pairs"><span class="pair">1&times;90</span><span class="pair">2&times;45</span><span class="pair">3&times;30</span><span class="pair">5&times;18</span><span class="pair">6&times;15</span><span class="pair">9&times;10</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">91</div>
+        <div class="pairs"><span class="pair">1&times;91</span><span class="pair">7&times;13</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">92</div>
+        <div class="pairs"><span class="pair">1&times;92</span><span class="pair">2&times;46</span><span class="pair">4&times;23</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">93</div>
+        <div class="pairs"><span class="pair">1&times;93</span><span class="pair">3&times;31</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">94</div>
+        <div class="pairs"><span class="pair">1&times;94</span><span class="pair">2&times;47</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">95</div>
+        <div class="pairs"><span class="pair">1&times;95</span><span class="pair">5&times;19</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">96</div>
+        <div class="pairs"><span class="pair">1&times;96</span><span class="pair">2&times;48</span><span class="pair">3&times;32</span><span class="pair">4&times;24</span><span class="pair">6&times;16</span><span class="pair">8&times;12</span></div>
+      </div>
+      <div class="factor-card prime">
+        <div class="num">97</div>
+        <div class="pairs"><span class="pair">1&times;97</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">98</div>
+        <div class="pairs"><span class="pair">1&times;98</span><span class="pair">2&times;49</span><span class="pair">7&times;14</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">99</div>
+        <div class="pairs"><span class="pair">1&times;99</span><span class="pair">3&times;33</span><span class="pair">9&times;11</span></div>
+      </div>
+      <div class="factor-card">
+        <div class="num">100</div>
+        <div class="pairs"><span class="pair">1&times;100</span><span class="pair">2&times;50</span><span class="pair">4&times;25</span><span class="pair">5&times;20</span><span class="pair">10&times;10</span></div>
+      </div>
+      </div>
 
 
     </div><!--/.fluid-container-->
