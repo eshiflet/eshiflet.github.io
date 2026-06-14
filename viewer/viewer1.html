@@ -82,12 +82,17 @@ button:active{transform:scale(0.98)}
 .elev-label{position:absolute;font-size:10px;color:#999;font-family:'Menlo','Consolas','Monaco',monospace;pointer-events:none;background:rgba(255,255,255,0.7);padding:0 4px;border-radius:3px}
 .elev-max{top:2px;left:4px}
 .elev-min{bottom:2px;left:4px}
+.ef-max{top:2px;right:4px;color:#b45309}
+.ef-min{bottom:2px;right:4px;color:#b45309}
+.ef-line{fill:none;stroke:#f59e0b;stroke-width:1.5;stroke-dasharray:3,2}
 .hover-line{stroke:#999;stroke-width:1;stroke-dasharray:2,2;opacity:0;pointer-events:none}
 .hover-dot{fill:#1a1a18;opacity:0;pointer-events:none}
 .chart-tooltip{position:absolute;top:2px;font-size:10px;color:#1a1a18;font-family:'Menlo','Consolas','Monaco',monospace;pointer-events:none;background:rgba(255,255,255,0.85);border:0.5px solid #ccc;border-radius:3px;padding:0 5px;white-space:nowrap;opacity:0;z-index:1}
 .axis-row{grid-column:1/-1;position:relative;height:12px;font-size:10px;color:#999;font-family:'Menlo','Consolas','Monaco',monospace;margin:2px 0 8px}
 .axis-row span{position:absolute;top:0;white-space:nowrap}
 .zone-buttons{grid-column:1/-1;display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 8px}
+.zone-buttons+.zone-buttons{margin-top:-8px}
+.row-label{font-size:11px;color:#999;font-family:'Menlo','Consolas','Monaco',monospace;white-space:nowrap}
 .zone-btn{font-family:'Menlo','Consolas','Monaco',monospace;font-size:11px;padding:2px 8px;cursor:pointer;border:0.5px solid #ccc;border-radius:5px;background:transparent;color:#666}
 .zone-btn:hover{background:#f1efe8}
 .zone-btn.active{background:#2563eb;color:#fff;border-color:#2563eb}
@@ -149,10 +154,13 @@ button:active{transform:scale(0.98)}
   .elev-line{stroke:#60a5fa}
   .elev-grid{stroke:#444}
   .elev-label{color:#888;background:rgba(26,26,24,0.7)}
+  .ef-max,.ef-min{color:#fbbf24}
+  .ef-line{stroke:#fbbf24}
   .hover-line{stroke:#888}
   .hover-dot{fill:#e8e8e4}
   .chart-tooltip{color:#e8e8e4;background:rgba(26,26,24,0.85);border-color:#444}
   .axis-row{color:#777}
+  .row-label{color:#777}
   .zone-btn{border-color:#444;color:#bbb}
   .zone-btn:hover{background:#333}
   .zone-btn.active{background:#60a5fa;color:#1a1a18;border-color:#60a5fa}
@@ -290,6 +298,7 @@ function handleTCX(raw,fname,size){
 let unitSystem='imperial';
 let xAxisMode='distance';
 let colorMode='none';
+let efMode=false;
 let currentActivity=null;
 
 function txt(el,tag){const e=el.getElementsByTagName(tag)[0];return e?e.textContent.trim():null}
@@ -482,15 +491,47 @@ function computeStats(samples){
   spd.forEach(v=>{if(v!==null)spdMax=Math.max(spdMax,v)});
   if(spdMax>0)st.maxSpeed=spdMax;
 
-  // downsampled elevation profile for the sparkline: [distanceM, elevationM, timestampMs, hr, cadence, watts, speedMps]
+  // rolling Efficiency Factor (Normalized Power / Average HR), both computed
+  // over the same centered 30-second window at each sample. Requires power,
+  // HR, and timestamps for every sample.
+  let ef=null;
+  if(pwN&&hrN&&samples.every(s=>s.t!==null)){
+    ef=new Array(n).fill(null);
+    const halfWin=15000; // ms (30s window total)
+    let lo=0,hi=0,p4Sum=0,p4N=0,hrSum2=0,hrCnt=0;
+    for(let i=0;i<n;i++){
+      const ti=samples[i].t;
+      while(hi<n&&samples[hi].t<=ti+halfWin){
+        const w=samples[hi].watts,h=samples[hi].hr;
+        if(w!==null){p4Sum+=Math.pow(w,4);p4N++}
+        if(h!==null){hrSum2+=h;hrCnt++}
+        hi++;
+      }
+      while(lo<i&&samples[lo].t<ti-halfWin){
+        const w=samples[lo].watts,h=samples[lo].hr;
+        if(w!==null){p4Sum-=Math.pow(w,4);p4N--}
+        if(h!==null){hrSum2-=h;hrCnt--}
+        lo++;
+      }
+      if(p4N>0&&hrCnt>0){
+        const np=Math.pow(p4Sum/p4N,0.25);
+        const avgHrWin=hrSum2/hrCnt;
+        // np===0 means zero power throughout the window (stopped/coasting) --
+        // treat as a gap rather than an EF of 0
+        ef[i]=(avgHrWin>0&&np>0)?np/avgHrWin:null;
+      }
+    }
+  }
+
+  // downsampled elevation profile for the sparkline: [distanceM, elevationM, timestampMs, hr, cadence, watts, speedMps, efficiencyFactor]
   const maxPts=500,step=Math.max(1,Math.floor(n/maxPts));
   st.profile=[];
   for(let i=0;i<n;i+=step){
-    if(samples[i].ele!==null)st.profile.push([samples[i].dist,samples[i].ele,samples[i].t,samples[i].hr,samples[i].cad,samples[i].watts,spd[i]]);
+    if(samples[i].ele!==null)st.profile.push([samples[i].dist,samples[i].ele,samples[i].t,samples[i].hr,samples[i].cad,samples[i].watts,spd[i],ef?ef[i]:null]);
   }
   const last=samples[n-1];
   if(last.ele!==null&&(!st.profile.length||st.profile[st.profile.length-1][0]!==last.dist)){
-    st.profile.push([last.dist,last.ele,last.t,last.hr,last.cad,last.watts,spd[n-1]]);
+    st.profile.push([last.dist,last.ele,last.t,last.hr,last.cad,last.watts,spd[n-1],ef?ef[n-1]:null]);
   }
 
   return st;
@@ -611,7 +652,7 @@ function updateSparklineColors(){
   const xMode=(xAxisMode==='time'&&hasTime)?'time':'distance';
   const maxVal=COLOR_FIELDS[colorMode]?s[COLOR_FIELDS[colorMode].maxKey]:undefined;
   const svg=chartEl.querySelector('svg');
-  if(svg)svg.outerHTML=buildSparkline(s.profile,xMode,colorMode,maxVal);
+  if(svg)svg.outerHTML=buildSparkline(s.profile,xMode,colorMode,maxVal,efMode);
 }
 // drag handler for zone-boundary handles
 function startZoneDrag(e){
@@ -660,7 +701,16 @@ function gridValues(min,max,interval){
   for(let v=start;v<=max+1e-9;v+=interval)out.push(v);
   return out;
 }
-function buildSparkline(profile,xMode,colorMode,maxVal){
+// min/max Efficiency Factor across a profile (ignoring missing values)
+function efRange(profile){
+  let min=Infinity,max=-Infinity;
+  profile.forEach(p=>{
+    const v=p[7];
+    if(v!==null&&v!==undefined&&isFinite(v)){if(v<min)min=v;if(v>max)max=v}
+  });
+  return min===Infinity?null:{min,max};
+}
+function buildSparkline(profile,xMode,colorMode,maxVal,efMode){
   if(!profile||profile.length<2)return '';
   const w=600,h=70,pad=2;
   const t0=profile[0][2];
@@ -706,13 +756,40 @@ function buildSparkline(profile,xMode,colorMode,maxVal){
     line='<polyline points="'+ptStrs.join(' ')+'" class="elev-line" vector-effect="non-scaling-stroke"/>';
     area='<polygon points="'+areaPts+'" class="elev-area"/>';
   }
+  // optional Efficiency Factor overlay, scaled to its own min/max and drawn
+  // as a dashed line (with gaps where EF couldn't be computed)
+  let efLine='';
+  if(efMode){
+    const er=efRange(profile);
+    if(er){
+      const spanEF=(er.max-er.min)||1;
+      let seg=[];
+      xs.forEach((x,i)=>{
+        const v=profile[i][7];
+        const px=pad+(x-minX)/spanX*(w-2*pad);
+        if(v===null||v===undefined||!isFinite(v)){
+          if(seg.length>1)efLine+='<polyline points="'+seg.join(' ')+'" class="ef-line" vector-effect="non-scaling-stroke"/>';
+          seg=[];
+          return;
+        }
+        const py=h-pad-(v-er.min)/spanEF*(h-2*pad);
+        seg.push(px.toFixed(1)+','+py.toFixed(1));
+      });
+      if(seg.length>1)efLine+='<polyline points="'+seg.join(' ')+'" class="ef-line" vector-effect="non-scaling-stroke"/>';
+    }
+  }
   return '<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" class="elev-spark">'
     +grid
     +area
     +line
+    +efLine
     +'<line class="hover-line" x1="0" y1="0" x2="0" y2="'+h+'" vector-effect="non-scaling-stroke"/>'
     +'<circle class="hover-dot" cx="0" cy="0" r="2.5"/>'
     +'</svg>';
+}
+// Efficiency Factor label (2 decimal places)
+function fmtEF(v){
+  return (v===null||v===undefined||!isFinite(v))?'–':v.toFixed(2);
 }
 // distance label for the chart hover tooltip (1 decimal place)
 function fmtTooltipDist(m){
@@ -749,7 +826,12 @@ function chartHover(e,wrap){
   hl.setAttribute('x1',px.toFixed(1));hl.setAttribute('x2',px.toFixed(1));
   dot.style.opacity=1;hl.style.opacity=1;
   const xLabel=xMode==='time'?fmtDuration(xs[idx]):fmtTooltipDist(xs[idx]);
-  tip.textContent=xLabel+', '+fmtEleU(eles[idx]);
+  let tipText=xLabel+', '+fmtEleU(eles[idx]);
+  if(efMode){
+    const ef=profile[idx][7];
+    if(ef!==null&&ef!==undefined&&isFinite(ef))tipText+=', EF '+fmtEF(ef);
+  }
+  tip.textContent=tipText;
   const leftPct=px/w*100;
   tip.style.left=leftPct+'%';
   tip.style.transform=leftPct<10?'translateX(0)':leftPct>90?'translateX(-100%)':'translateX(-50%)';
@@ -825,15 +907,25 @@ function renderSummary(activity){
 
   if(s.profile&&s.profile.length>1){
     const maxVal=COLOR_FIELDS[colorMode]?s[COLOR_FIELDS[colorMode].maxKey]:undefined;
-    html+='<div class="summary-chart" onpointermove="chartHover(event,this)" onpointerleave="chartHoverEnd(this)"><span class="elev-label elev-max">'+fmtEleU(s.maxEleM)+'</span><span class="elev-label elev-min">'+fmtEleU(s.minEleM)+'</span><span class="chart-tooltip"></span>'+buildSparkline(s.profile,xMode,colorMode,maxVal)+'</div>';
+    const er=efMode?efRange(s.profile):null;
+    html+='<div class="summary-chart" onpointermove="chartHover(event,this)" onpointerleave="chartHoverEnd(this)"><span class="elev-label elev-max">'+fmtEleU(s.maxEleM)+'</span><span class="elev-label elev-min">'+fmtEleU(s.minEleM)+'</span>';
+    if(er){
+      html+='<span class="elev-label ef-max">EF '+fmtEF(er.max)+'</span><span class="elev-label ef-min">EF '+fmtEF(er.min)+'</span>';
+    }
+    html+='<span class="chart-tooltip"></span>'+buildSparkline(s.profile,xMode,colorMode,maxVal,efMode)+'</div>';
     html+=buildAxisRow(s.profile,xMode);
-    html+='<div class="zone-buttons">';
+    html+='<div class="zone-buttons"><span class="row-label">Metrics:</span>';
     if(s.avgHR!==undefined)html+='<button class="zone-btn'+(colorMode==='hr'?' active':'')+'" onclick="setColorMode(\'hr\')">Heart Rate</button>';
     if(s.avgPower!==undefined)html+='<button class="zone-btn'+(colorMode==='power'?' active':'')+'" onclick="setColorMode(\'power\')">Power</button>';
     if(s.avgCadence!==undefined)html+='<button class="zone-btn'+(colorMode==='cadence'?' active':'')+'" onclick="setColorMode(\'cadence\')">Cadence</button>';
     if(s.maxSpeed)html+='<button class="zone-btn'+(colorMode==='speed'?' active':'')+'" onclick="setColorMode(\'speed\')">Speed</button>';
     if(maxVal)html+=buildZoneBar(colorMode,maxVal,s);
     html+='</div>';
+    if(s.avgPower!==undefined&&s.avgHR!==undefined){
+      html+='<div class="zone-buttons"><span class="row-label">Analytics:</span>';
+      html+='<button class="zone-btn'+(efMode?' active':'')+'" onclick="toggleEF()">Efficiency Factor</button>';
+      html+='</div>';
+    }
   }
   items.forEach(([label,val])=>{
     html+='<div class="stat"><span class="stat-label">'+esc(label)+'</span><span class="stat-value">'+esc(String(val))+'</span></div>';
@@ -850,6 +942,12 @@ function toggleUnits(){
 
 function setColorMode(mode){
   colorMode=colorMode===mode?'none':mode;
+  const el=document.getElementById('activity-summary');
+  if(el&&currentActivity)el.outerHTML=renderSummary(currentActivity);
+}
+
+function toggleEF(){
+  efMode=!efMode;
   const el=document.getElementById('activity-summary');
   if(el&&currentActivity)el.outerHTML=renderSummary(currentActivity);
 }
