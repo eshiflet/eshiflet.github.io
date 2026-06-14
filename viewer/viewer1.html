@@ -88,6 +88,14 @@ button:active{transform:scale(0.98)}
 .zone-btn:hover{background:#f1efe8}
 .zone-btn.active{background:#2563eb;color:#fff;border-color:#2563eb}
 .zone-info{font-size:10px;color:#999;font-family:'Menlo','Consolas','Monaco',monospace;margin-left:auto}
+.zone-bar-wrap{flex:1 1 220px;min-width:180px;margin:20px 0 0}
+.zone-bar{position:relative;height:14px}
+.zone-seg-track{position:absolute;inset:0;border-radius:4px;overflow:hidden}
+.zone-seg{position:absolute;top:0;bottom:0}
+.zone-handle{position:absolute;top:-3px;width:10px;height:20px;margin-left:-5px;background:#1a1a18;border-radius:2px;cursor:ew-resize;touch-action:none}
+.zone-handle-label{position:absolute;top:-17px;left:50%;transform:translateX(-50%);font-size:10px;font-family:'Menlo','Consolas','Monaco',monospace;color:#666;white-space:nowrap;pointer-events:none}
+.zone-names{position:relative;height:14px;margin-top:4px;font-size:10px;font-family:'Menlo','Consolas','Monaco',monospace}
+.zone-names span{position:absolute;text-align:center}
 
 @media (prefers-color-scheme: dark){
   body{background:#1a1a18; color:#e8e8e4}
@@ -141,6 +149,8 @@ button:active{transform:scale(0.98)}
   .zone-btn:hover{background:#333}
   .zone-btn.active{background:#60a5fa;color:#1a1a18;border-color:#60a5fa}
   .zone-info{color:#777}
+  .zone-handle{background:#e8e8e4}
+  .zone-handle-label{color:#aaa}
 }
 </style>
 </head>
@@ -487,66 +497,137 @@ function profileX(p,xMode,t0){
 function profileHasTime(profile){
   return !!profile&&profile.length>1&&profile.every(p=>p[2]!==null);
 }
-// zone colors: 1 (0-60%) blue, 2 (60-70%) green, 3 (70-80%) yellow, 4 (80-90%) orange, 5 (90-100%) red
+// zone colors: 1 blue, 2 green, 3 yellow, 4 orange, 5 red
 const ZONE_COLORS=['#3b82f6','#22c55e','#eab308','#f97316','#ef4444'];
-function zoneColor(pct){
-  if(pct<60)return ZONE_COLORS[0];
-  if(pct<70)return ZONE_COLORS[1];
-  if(pct<80)return ZONE_COLORS[2];
-  if(pct<90)return ZONE_COLORS[3];
+const ZONE_NAMES=['Zone 1','Zone 2','Zone 3','Zone 4','Zone 5'];
+// adjustable zone boundaries (4 bounds defining 5 zones) per color mode.
+// hr bounds are percent of maxHR; power=watts; cadence=rpm; speed=mph
+const ZONE_BOUNDS={
+  hr:[60,70,80,90],
+  power:[100,200,300,400],
+  cadence:[55,75,95,110],
+  speed:[6,12,17,25]
+};
+function zoneColorFor(mode,val){
+  const b=ZONE_BOUNDS[mode];
+  for(let i=0;i<4;i++)if(val<b[i])return ZONE_COLORS[i];
   return ZONE_COLORS[4];
 }
-// fixed power zone bins (watts): Z1 <100, Z2 100-200, Z3 200-300, Z4 300-400, Z5 400+
-function zoneColorPower(watts){
-  if(watts<100)return ZONE_COLORS[0];
-  if(watts<200)return ZONE_COLORS[1];
-  if(watts<300)return ZONE_COLORS[2];
-  if(watts<400)return ZONE_COLORS[3];
-  return ZONE_COLORS[4];
+// converts a #rgb or #rrggbb hex color string to an rgba() string with the given alpha
+function hexToRgba(hex,alpha){
+  let h=hex.replace('#','');
+  if(h.length===3)h=h.split('').map(c=>c+c).join('');
+  const r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);
+  return 'rgba('+r+','+g+','+b+','+alpha+')';
 }
-// fixed cadence zone bins (rpm): Z1 <55, Z2 55-75, Z3 75-95, Z4 95-110, Z5 110+
-function zoneColorCadence(rpm){
-  if(rpm<55)return ZONE_COLORS[0];
-  if(rpm<75)return ZONE_COLORS[1];
-  if(rpm<95)return ZONE_COLORS[2];
-  if(rpm<110)return ZONE_COLORS[3];
-  return ZONE_COLORS[4];
-}
-// fixed speed zone bins (mph): Z1 <6, Z2 6-12, Z3 12-17, Z4 17-25, Z5 25+
-function zoneColorSpeed(mps){
-  const mph=mps*2.23694;
-  if(mph<6)return ZONE_COLORS[0];
-  if(mph<12)return ZONE_COLORS[1];
-  if(mph<17)return ZONE_COLORS[2];
-  if(mph<25)return ZONE_COLORS[3];
-  return ZONE_COLORS[4];
-}
-// human-readable zone value ranges for a given color mode, color-coded to match the chart zones,
-// e.g. "Z1: -114  Z2: 115-133  ... (bpm)"
-function zoneRangesHtml(colorMode,maxVal){
-  if(!maxVal)return '';
-  const units={hr:'bpm',power:'W',cadence:'rpm',speed:unitSystem==='imperial'?'mph':'km/h'};
-  let scale=maxVal,dec=0;
-  if(colorMode==='speed'){scale=unitSystem==='imperial'?maxVal*2.23694:maxVal*3.6;dec=1}
-  const step=dec?0.1:1;
-  const fmt=v=>dec?v.toFixed(dec):Math.round(v);
-  let labels;
-  if(colorMode==='power'){
-    labels=['Z1: →100','Z2: 100-200','Z3: 200-300','Z4: 300-400','Z5: 400+'];
-  }else if(colorMode==='cadence'){
-    labels=['Z1: →55','Z2: 55-75','Z3: 75-95','Z4: 95-110','Z5: 110+'];
-  }else if(colorMode==='speed'){
-    const mphBins=[6,12,17,25];
-    const sb=unitSystem==='imperial'?mphBins:mphBins.map(v=>Math.round(v*1.60934));
-    labels=['Z1: →'+sb[0],'Z2: '+sb[0]+'-'+sb[1],'Z3: '+sb[1]+'-'+sb[2],'Z4: '+sb[2]+'-'+sb[3],'Z5: '+sb[3]+'+'];
-  }else{
-    const b=[0.6,0.7,0.8,0.9].map(f=>+(scale*f).toFixed(dec));
-    labels=['Z1: →'+fmt(b[0])];
-    for(let i=1;i<4;i++)labels.push('Z'+(i+1)+': '+fmt(+(b[i-1]+step).toFixed(dec))+'-'+fmt(b[i]));
-    labels.push('Z5: '+fmt(+(b[3]+step).toFixed(dec))+'+');
+function zoneColor(pct){return zoneColorFor('hr',pct);}
+function zoneColorPower(watts){return zoneColorFor('power',watts);}
+function zoneColorCadence(rpm){return zoneColorFor('cadence',rpm);}
+function zoneColorSpeed(mps){return zoneColorFor('speed',mps*2.23694);}
+// formatted label for a zone boundary value, in display units for the given color mode
+function zoneBoundLabel(mode,val,maxVal){
+  if(mode==='hr')return Math.round(val/100*maxVal)+' bpm';
+  if(mode==='power')return Math.round(val)+' W';
+  if(mode==='cadence')return Math.round(val)+' rpm';
+  if(mode==='speed'){
+    const disp=unitSystem==='imperial'?val:val*1.60934;
+    return Math.round(disp)+(unitSystem==='imperial'?' mph':' km/h');
   }
-  const spans=labels.map((l,i)=>'<span style="color:'+ZONE_COLORS[i]+'">'+esc(l)+'</span>');
-  return spans.join('  ')+' ('+esc(units[colorMode])+')';
+  return '';
+}
+// full-scale domain (in the same units as ZONE_BOUNDS) for the zone bar
+function zoneBarDomain(mode,maxVal){
+  const b=ZONE_BOUNDS[mode];
+  if(mode==='hr')return 100;
+  if(mode==='speed')return Math.max(maxVal*2.23694,b[3]+5);
+  return Math.max(maxVal,b[3]+(mode==='power'?50:20));
+}
+// draggable zone-boundary bar: 5 colored segments + 4 movable handles + zone name labels
+function buildZoneBar(colorMode,maxVal,s){
+  if(!COLOR_FIELDS[colorMode]||!maxVal)return '';
+  const bounds=ZONE_BOUNDS[colorMode];
+  const domain=zoneBarDomain(colorMode,maxVal);
+  const edges=[0,...bounds,domain];
+  let segHtml='',namesHtml='';
+  for(let i=0;i<5;i++){
+    const left=edges[i]/domain*100,width=(edges[i+1]-edges[i])/domain*100;
+    segHtml+='<div class="zone-seg" style="left:'+left.toFixed(3)+'%;width:'+width.toFixed(3)+'%;background:'+ZONE_COLORS[i]+'"></div>';
+    namesHtml+='<span style="left:'+left.toFixed(3)+'%;width:'+width.toFixed(3)+'%;color:'+ZONE_COLORS[i]+'">'+ZONE_NAMES[i]+'</span>';
+  }
+  let handleHtml='';
+  for(let i=0;i<4;i++){
+    const pct=bounds[i]/domain*100;
+    handleHtml+='<div class="zone-handle" data-idx="'+i+'" onpointerdown="startZoneDrag(event)" style="left:'+pct.toFixed(3)+'%"><span class="zone-handle-label">'+zoneBoundLabel(colorMode,bounds[i],maxVal)+'</span></div>';
+  }
+  return '<div class="zone-bar-wrap" data-mode="'+colorMode+'" data-domain="'+domain+'" data-maxval="'+maxVal+'">'
+    +'<div class="zone-bar"><div class="zone-seg-track">'+segHtml+'</div>'+handleHtml+'</div>'
+    +'<div class="zone-names">'+namesHtml+'</div>'
+    +'</div>';
+}
+// live-update the bar's segment widths, handle positions, and labels (no full re-render)
+function updateZoneBar(wrap,mode,domain,maxVal){
+  const bounds=ZONE_BOUNDS[mode];
+  const edges=[0,...bounds,domain];
+  const segs=wrap.querySelectorAll('.zone-seg');
+  const names=wrap.querySelectorAll('.zone-names span');
+  for(let i=0;i<5;i++){
+    const left=(edges[i]/domain*100)+'%',width=((edges[i+1]-edges[i])/domain*100)+'%';
+    segs[i].style.left=left;segs[i].style.width=width;
+    names[i].style.left=left;names[i].style.width=width;
+  }
+  wrap.querySelectorAll('.zone-handle').forEach((h,i)=>{
+    h.style.left=(bounds[i]/domain*100)+'%';
+    h.querySelector('.zone-handle-label').textContent=zoneBoundLabel(mode,bounds[i],maxVal);
+  });
+}
+// rebuild just the sparkline SVG so colors reflect live-dragged zone boundaries
+function updateSparklineColors(){
+  if(!currentActivity)return;
+  const s=currentActivity.stats;
+  const chartEl=document.querySelector('.summary-chart');
+  if(!chartEl||!s.profile)return;
+  const hasTime=profileHasTime(s.profile);
+  const xMode=(xAxisMode==='time'&&hasTime)?'time':'distance';
+  const maxVal=COLOR_FIELDS[colorMode]?s[COLOR_FIELDS[colorMode].maxKey]:undefined;
+  const svg=chartEl.querySelector('svg');
+  if(svg)svg.outerHTML=buildSparkline(s.profile,xMode,colorMode,maxVal);
+}
+// drag handler for zone-boundary handles
+function startZoneDrag(e){
+  e.preventDefault();
+  const handle=e.currentTarget;
+  const wrap=handle.closest('.zone-bar-wrap');
+  const bar=handle.parentElement;
+  const mode=wrap.dataset.mode;
+  const domain=+wrap.dataset.domain;
+  const maxVal=+wrap.dataset.maxval;
+  const idx=+handle.dataset.idx;
+  const bounds=ZONE_BOUNDS[mode];
+  const gap=domain*0.01;
+  const lo=(idx===0?0:bounds[idx-1])+gap;
+  const hi=(idx===3?domain:bounds[idx+1])-gap;
+  const rect=bar.getBoundingClientRect();
+  let pending=false;
+  function apply(val){
+    bounds[idx]=Math.max(lo,Math.min(hi,val));
+    if(!pending){
+      pending=true;
+      requestAnimationFrame(()=>{
+        pending=false;
+        updateZoneBar(wrap,mode,domain,maxVal);
+        updateSparklineColors();
+      });
+    }
+  }
+  function onMove(ev){
+    apply((ev.clientX-rect.left)/rect.width*domain);
+  }
+  function onUp(){
+    document.removeEventListener('pointermove',onMove);
+    document.removeEventListener('pointerup',onUp);
+  }
+  document.addEventListener('pointermove',onMove);
+  document.addEventListener('pointerup',onUp);
 }
 // index of [hr,cadence,watts,speed] within a profile point, and the stats field holding its max
 const COLOR_FIELDS={hr:{idx:3,maxKey:'maxHR'},cadence:{idx:4,maxKey:'maxCadence'},power:{idx:5,maxKey:'maxPower'},speed:{idx:6,maxKey:'maxSpeed'}};
@@ -565,23 +646,26 @@ function buildSparkline(profile,xMode,colorMode,maxVal){
   });
   const ptStrs=pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1));
   const areaPts='0,'+h+' '+ptStrs.join(' ')+' '+w+','+h;
-  let line;
+  let line,area;
   const cf=COLOR_FIELDS[colorMode];
   if(cf&&maxVal){
-    let segs='';
+    let segs='',areas='';
     for(let i=0;i<pts.length-1;i++){
       const v0=profile[i][cf.idx],v1=profile[i+1][cf.idx];
       let v=null;
       if(v0!==null&&v1!==null)v=(v0+v1)/2;else if(v0!==null)v=v0;else if(v1!==null)v=v1;
       const color=v===null?'#999':(colorMode==='power'?zoneColorPower(v):colorMode==='cadence'?zoneColorCadence(v):colorMode==='speed'?zoneColorSpeed(v):zoneColor(v/maxVal*100));
       segs+='<line x1="'+pts[i][0].toFixed(1)+'" y1="'+pts[i][1].toFixed(1)+'" x2="'+pts[i+1][0].toFixed(1)+'" y2="'+pts[i+1][1].toFixed(1)+'" stroke="'+color+'" stroke-width="1.5" vector-effect="non-scaling-stroke"/>';
+      areas+='<polygon points="'+pts[i][0].toFixed(1)+','+h+' '+pts[i][0].toFixed(1)+','+pts[i][1].toFixed(1)+' '+pts[i+1][0].toFixed(1)+','+pts[i+1][1].toFixed(1)+' '+pts[i+1][0].toFixed(1)+','+h+'" fill="'+hexToRgba(color,0.18)+'" stroke="none"/>';
     }
     line=segs;
+    area=areas;
   }else{
     line='<polyline points="'+ptStrs.join(' ')+'" class="elev-line" vector-effect="non-scaling-stroke"/>';
+    area='<polygon points="'+areaPts+'" class="elev-area"/>';
   }
   return '<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" class="elev-spark">'
-    +'<polygon points="'+areaPts+'" class="elev-area"/>'
+    +area
     +line
     +'</svg>';
 }
@@ -640,7 +724,7 @@ function renderSummary(activity){
     if(s.avgPower!==undefined)html+='<button class="zone-btn'+(colorMode==='power'?' active':'')+'" onclick="setColorMode(\'power\')">Power Zones</button>';
     if(s.avgCadence!==undefined)html+='<button class="zone-btn'+(colorMode==='cadence'?' active':'')+'" onclick="setColorMode(\'cadence\')">Cadence</button>';
     if(s.maxSpeed)html+='<button class="zone-btn'+(colorMode==='speed'?' active':'')+'" onclick="setColorMode(\'speed\')">Speed</button>';
-    if(maxVal)html+='<span class="zone-info">'+zoneRangesHtml(colorMode,maxVal)+'</span>';
+    if(maxVal)html+=buildZoneBar(colorMode,maxVal,s);
     html+='</div>';
   }
   items.forEach(([label,val])=>{
