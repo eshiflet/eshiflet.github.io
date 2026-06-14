@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JSON / XML / GPX / TCX Viewer</title>
+<link rel="shortcut icon" href="../icons/favicon.ico">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,sans-serif;background:#f9f9f8;color:#1a1a18;padding:1.5rem;min-height:100vh}
@@ -14,6 +15,7 @@ h1{font-size:18px;font-weight:500;margin-bottom:1.25rem;color:#1a1a18}
 .dz-icon{font-size:28px;margin-bottom:8px; color:#888}
 .dz-label{font-size:14px;font-weight:500; color:#555}
 .dz-sub{font-size:12px; color:#999;margin-top:4px}
+.dz-buttons{margin-top:14px;display:flex;gap:8px;justify-content:center}
 #controls{display:none;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
 #search{flex:1;min-width:160px;font-family:system-ui,sans-serif;font-size:13px;padding:5px 10px;border:0.5px solid #ccc;border-radius:6px; outline:none;background:#fff;color:#1a1a18}
 #search:focus{border-color:#888}
@@ -165,13 +167,17 @@ button:active{transform:scale(0.98)}
 <div id="drop-zone">
   <input type="file" id="file-input" accept=".json,.xml,.gpx,.tcx,application/json,application/xml,text/xml">
   <div class="dz-icon">{ }</div>
-  <div class="dz-label">Drop a JSON, XML, GPX, or TCX file here</div>
-  <div class="dz-sub">or click to browse</div>
+  <div class="dz-label">Drop a TCX, GPX, JSON, or XML file here</div>
+  <div class="dz-label">(TCX with HRM and power data recommended for bike ride analysis)</div>
+  <div class="dz-buttons">
+    <button id="btn-browse" onclick="event.stopPropagation();fi.click()">Click to Browse</button>
+    <button id="btn-sample" onclick="event.stopPropagation();loadSample()">Load Sample Data</button>
+  </div>
 </div>
 <div id="controls">
   <input id="search" type="text" placeholder="Search keys, tags, or values..." oninput="filterTree(this.value)">
-  <button id="btn-expand" onclick="setAll(false)">Expand all</button>
-  <button id="btn-collapse" onclick="setAll(true)">Collapse all</button>
+  <button id="btn-expand" onclick="setAll(false)">Expand All</button>
+  <button id="btn-collapse" onclick="setAll(true)">Collapse All</button>
   <button onclick="reset()">Clear File</button>
 </div>
 <div id="tree-wrap">
@@ -186,6 +192,15 @@ dz.ondragover=e=>{e.preventDefault();dz.classList.add('over')};
 dz.ondragleave=()=>dz.classList.remove('over');
 dz.ondrop=e=>{e.preventDefault();dz.classList.remove('over');if(e.dataTransfer.files[0])readFile(e.dataTransfer.files[0])};
 fi.onchange=e=>{if(e.target.files[0])readFile(e.target.files[0])};
+
+function loadSample(){
+  fetch('LoganMill.tcx').then(r=>{
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    return r.text();
+  }).then(raw=>{
+    handleTCX(raw,'LoganMill.tcx',raw.length);
+  }).catch(err=>alert('Could not load sample data: '+err.message));
+}
 
 function fileType(f){
   const name=f.name.toLowerCase();
@@ -468,7 +483,7 @@ function computeStats(samples){
   if(spdMax>0)st.maxSpeed=spdMax;
 
   // downsampled elevation profile for the sparkline: [distanceM, elevationM, timestampMs, hr, cadence, watts, speedMps]
-  const maxPts=150,step=Math.max(1,Math.floor(n/maxPts));
+  const maxPts=500,step=Math.max(1,Math.floor(n/maxPts));
   st.profile=[];
   for(let i=0;i<n;i+=step){
     if(samples[i].ele!==null)st.profile.push([samples[i].dist,samples[i].ele,samples[i].t,samples[i].hr,samples[i].cad,samples[i].watts,spd[i]]);
@@ -813,8 +828,8 @@ function renderSummary(activity){
     html+='<div class="summary-chart" onpointermove="chartHover(event,this)" onpointerleave="chartHoverEnd(this)"><span class="elev-label elev-max">'+fmtEleU(s.maxEleM)+'</span><span class="elev-label elev-min">'+fmtEleU(s.minEleM)+'</span><span class="chart-tooltip"></span>'+buildSparkline(s.profile,xMode,colorMode,maxVal)+'</div>';
     html+=buildAxisRow(s.profile,xMode);
     html+='<div class="zone-buttons">';
-    if(s.avgHR!==undefined)html+='<button class="zone-btn'+(colorMode==='hr'?' active':'')+'" onclick="setColorMode(\'hr\')">Heart Rate Zones</button>';
-    if(s.avgPower!==undefined)html+='<button class="zone-btn'+(colorMode==='power'?' active':'')+'" onclick="setColorMode(\'power\')">Power Zones</button>';
+    if(s.avgHR!==undefined)html+='<button class="zone-btn'+(colorMode==='hr'?' active':'')+'" onclick="setColorMode(\'hr\')">Heart Rate</button>';
+    if(s.avgPower!==undefined)html+='<button class="zone-btn'+(colorMode==='power'?' active':'')+'" onclick="setColorMode(\'power\')">Power</button>';
     if(s.avgCadence!==undefined)html+='<button class="zone-btn'+(colorMode==='cadence'?' active':'')+'" onclick="setColorMode(\'cadence\')">Cadence</button>';
     if(s.maxSpeed)html+='<button class="zone-btn'+(colorMode==='speed'?' active':'')+'" onclick="setColorMode(\'speed\')">Speed</button>';
     if(maxVal)html+=buildZoneBar(colorMode,maxVal,s);
