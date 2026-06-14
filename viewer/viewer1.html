@@ -40,7 +40,7 @@ button:active{transform:scale(0.98)}
 .val-bool{color:#d97706}
 .val-null{color:#6b7280;font-style:italic}
 .val-type{font-size:11px;color:#aaa;font-family:system-ui,sans-serif}
-.collapsed>.node{display:none}
+.node.collapsed{display:none}
 .highlight .key,.highlight .val-str,.highlight .val-num,.highlight .xml-tag,.highlight .xml-attr{background:#615b32;border-radius:2px;color:inherit}
 .banner{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-radius:8px;margin-bottom:12px;font-family:system-ui,sans-serif;border:0.5px solid}
 .banner-warn{background:#fefce8;border-color:#fde047}
@@ -921,7 +921,18 @@ function showPanel(){
 
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function tog(id){const el=document.getElementById(id),btn=document.querySelector('[data-id="'+id+'"] .toggle');if(!el)return;const c=el.classList.toggle('collapsed');if(btn)btn.textContent=c?'▸':'▾'}
-function setAll(c){document.querySelectorAll('.node').forEach(el=>el.classList.toggle('collapsed',c));document.querySelectorAll('.toggle').forEach(b=>{if(b.style&&b.style.opacity==='0.2')return;b.textContent=c?'▸':'▾'})}
+function setAll(c){
+  // top-level nodes (direct children of #tree) stay expanded so their rows remain
+  // visible; collapsing only affects descendants
+  const topNodes=new Set(document.querySelectorAll('#tree>.node'));
+  document.querySelectorAll('.node').forEach(el=>{if(!topNodes.has(el))el.classList.toggle('collapsed',c)});
+  document.querySelectorAll('.toggle').forEach(b=>{
+    if(b.style&&b.style.opacity==='0.2')return;
+    const row=b.closest('.row'),node=row&&document.getElementById(row.dataset.id);
+    if(node&&topNodes.has(node))return;
+    b.textContent=c?'▸':'▾';
+  });
+}
 function filterTree(q){document.querySelectorAll('#tree .row').forEach(r=>{r.classList.remove('highlight');if(q&&r.textContent.toLowerCase().includes(q.toLowerCase()))r.classList.add('highlight')})}
 function reset(){
   currentActivity=null;
