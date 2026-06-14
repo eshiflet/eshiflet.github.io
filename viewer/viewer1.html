@@ -76,13 +76,15 @@ button:active{transform:scale(0.98)}
 .elev-spark{width:100%;height:70px;display:block}
 .elev-area{fill:rgba(37,99,235,0.15);stroke:none}
 .elev-line{fill:none;stroke:#2563eb;stroke-width:1.5}
+.elev-grid{stroke:#ddd;stroke-width:1}
 .elev-label{position:absolute;font-size:10px;color:#999;font-family:'Menlo','Consolas','Monaco',monospace;pointer-events:none;background:rgba(255,255,255,0.7);padding:0 4px;border-radius:3px}
 .elev-max{top:2px;left:4px}
 .elev-min{bottom:2px;left:4px}
-.axis-row{grid-column:1/-1;display:flex;justify-content:space-between;font-size:10px;color:#999;font-family:'Menlo','Consolas','Monaco',monospace;margin:2px 0 8px}
-.axis-row span{white-space:nowrap}
-.axis-row span:first-child{text-align:left}
-.axis-row span:last-child{text-align:right}
+.hover-line{stroke:#999;stroke-width:1;stroke-dasharray:2,2;opacity:0;pointer-events:none}
+.hover-dot{fill:#1a1a18;opacity:0;pointer-events:none}
+.chart-tooltip{position:absolute;top:2px;font-size:10px;color:#1a1a18;font-family:'Menlo','Consolas','Monaco',monospace;pointer-events:none;background:rgba(255,255,255,0.85);border:0.5px solid #ccc;border-radius:3px;padding:0 5px;white-space:nowrap;opacity:0;z-index:1}
+.axis-row{grid-column:1/-1;position:relative;height:12px;font-size:10px;color:#999;font-family:'Menlo','Consolas','Monaco',monospace;margin:2px 0 8px}
+.axis-row span{position:absolute;top:0;white-space:nowrap}
 .zone-buttons{grid-column:1/-1;display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 8px}
 .zone-btn{font-family:'Menlo','Consolas','Monaco',monospace;font-size:11px;padding:2px 8px;cursor:pointer;border:0.5px solid #ccc;border-radius:5px;background:transparent;color:#666}
 .zone-btn:hover{background:#f1efe8}
@@ -143,7 +145,11 @@ button:active{transform:scale(0.98)}
   .unit-toggle:hover{background:#333}
   .elev-area{fill:rgba(96,165,250,0.18)}
   .elev-line{stroke:#60a5fa}
+  .elev-grid{stroke:#444}
   .elev-label{color:#888;background:rgba(26,26,24,0.7)}
+  .hover-line{stroke:#888}
+  .hover-dot{fill:#e8e8e4}
+  .chart-tooltip{color:#e8e8e4;background:rgba(26,26,24,0.85);border-color:#444}
   .axis-row{color:#777}
   .zone-btn{border-color:#444;color:#bbb}
   .zone-btn:hover{background:#333}
@@ -166,7 +172,7 @@ button:active{transform:scale(0.98)}
   <input id="search" type="text" placeholder="Search keys, tags, or values..." oninput="filterTree(this.value)">
   <button id="btn-expand" onclick="setAll(false)">Expand all</button>
   <button id="btn-collapse" onclick="setAll(true)">Collapse all</button>
-  <button onclick="reset()">Clear</button>
+  <button onclick="reset()">Clear File</button>
 </div>
 <div id="tree-wrap">
   <div class="stats" id="stats"></div>
@@ -631,6 +637,14 @@ function startZoneDrag(e){
 }
 // index of [hr,cadence,watts,speed] within a profile point, and the stats field holding its max
 const COLOR_FIELDS={hr:{idx:3,maxKey:'maxHR'},cadence:{idx:4,maxKey:'maxCadence'},power:{idx:5,maxKey:'maxPower'},speed:{idx:6,maxKey:'maxSpeed'}};
+// grid line positions: multiples of `interval` that fall within [min,max]
+function gridValues(min,max,interval){
+  if(!interval||!isFinite(interval)||interval<=0)return [];
+  const out=[];
+  const start=Math.ceil(min/interval)*interval;
+  for(let v=start;v<=max+1e-9;v+=interval)out.push(v);
+  return out;
+}
 function buildSparkline(profile,xMode,colorMode,maxVal){
   if(!profile||profile.length<2)return '';
   const w=600,h=70,pad=2;
@@ -643,6 +657,19 @@ function buildSparkline(profile,xMode,colorMode,maxVal){
     const px=pad+(x-minX)/spanX*(w-2*pad);
     const py=h-pad-(eles[i]-minE)/spanE*(h-2*pad);
     return [px,py];
+  });
+  // grid lines: horizontal at elevation intervals (500ft / 100m), vertical at
+  // distance intervals (5mi / 10km) or time intervals (15min)
+  let grid='';
+  const eleIntervalM=unitSystem==='imperial'?152.4:100;
+  gridValues(minE,maxE,eleIntervalM).forEach(v=>{
+    const py=h-pad-(v-minE)/spanE*(h-2*pad);
+    grid+='<line x1="0" y1="'+py.toFixed(1)+'" x2="'+w+'" y2="'+py.toFixed(1)+'" class="elev-grid" vector-effect="non-scaling-stroke"/>';
+  });
+  const xInterval=xMode==='time'?900:(unitSystem==='imperial'?8046.72:10000);
+  gridValues(minX,maxX,xInterval).forEach(v=>{
+    const px=pad+(v-minX)/spanX*(w-2*pad);
+    grid+='<line x1="'+px.toFixed(1)+'" y1="0" x2="'+px.toFixed(1)+'" y2="'+h+'" class="elev-grid" vector-effect="non-scaling-stroke"/>';
   });
   const ptStrs=pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1));
   const areaPts='0,'+h+' '+ptStrs.join(' ')+' '+w+','+h;
@@ -665,22 +692,88 @@ function buildSparkline(profile,xMode,colorMode,maxVal){
     area='<polygon points="'+areaPts+'" class="elev-area"/>';
   }
   return '<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" class="elev-spark">'
+    +grid
     +area
     +line
+    +'<line class="hover-line" x1="0" y1="0" x2="0" y2="'+h+'" vector-effect="non-scaling-stroke"/>'
+    +'<circle class="hover-dot" cx="0" cy="0" r="2.5"/>'
     +'</svg>';
 }
-// row of evenly-spaced tick labels along the x-axis (distance or elapsed time)
+// distance label for the chart hover tooltip (1 decimal place)
+function fmtTooltipDist(m){
+  if(m===null||m===undefined)return '–';
+  return unitSystem==='imperial'?(m/1609.344).toFixed(1)+' mi':(m/1000).toFixed(1)+' km';
+}
+// shows a tooltip + crosshair for the nearest profile point under the cursor
+function chartHover(e,wrap){
+  const s=currentActivity&&currentActivity.stats;
+  const profile=s&&s.profile;
+  const svg=wrap.querySelector('.elev-spark');
+  if(!profile||profile.length<2||!svg)return;
+  const rect=svg.getBoundingClientRect();
+  if(!rect.width)return;
+  const hasTime=profileHasTime(profile);
+  const xMode=(xAxisMode==='time'&&hasTime)?'time':'distance';
+  const t0=profile[0][2];
+  const xs=profile.map(p=>profileX(p,xMode,t0)),eles=profile.map(p=>p[1]);
+  const minX=xs[0],maxX=xs[xs.length-1];
+  const minE=Math.min(...eles),maxE=Math.max(...eles);
+  const spanX=(maxX-minX)||1,spanE=(maxE-minE)||1;
+  const frac=Math.min(1,Math.max(0,(e.clientX-rect.left)/rect.width));
+  const xVal=minX+frac*spanX;
+  let idx=0,best=Infinity;
+  for(let i=0;i<xs.length;i++){
+    const d=Math.abs(xs[i]-xVal);
+    if(d<best){best=d;idx=i}
+  }
+  const w=600,h=70,pad=2;
+  const px=pad+(xs[idx]-minX)/spanX*(w-2*pad);
+  const py=h-pad-(eles[idx]-minE)/spanE*(h-2*pad);
+  const dot=wrap.querySelector('.hover-dot'),hl=wrap.querySelector('.hover-line'),tip=wrap.querySelector('.chart-tooltip');
+  dot.setAttribute('cx',px.toFixed(1));dot.setAttribute('cy',py.toFixed(1));
+  hl.setAttribute('x1',px.toFixed(1));hl.setAttribute('x2',px.toFixed(1));
+  dot.style.opacity=1;hl.style.opacity=1;
+  const xLabel=xMode==='time'?fmtDuration(xs[idx]):fmtTooltipDist(xs[idx]);
+  tip.textContent=xLabel+', '+fmtEleU(eles[idx]);
+  const leftPct=px/w*100;
+  tip.style.left=leftPct+'%';
+  tip.style.transform=leftPct<10?'translateX(0)':leftPct>90?'translateX(-100%)':'translateX(-50%)';
+  tip.style.opacity=1;
+}
+function chartHoverEnd(wrap){
+  const dot=wrap.querySelector('.hover-dot'),hl=wrap.querySelector('.hover-line'),tip=wrap.querySelector('.chart-tooltip');
+  if(dot)dot.style.opacity=0;
+  if(hl)hl.style.opacity=0;
+  if(tip)tip.style.opacity=0;
+}
+// axis-label formatters: whole units only (the 15min/5mi-or-10km grid never
+// produces a fractional remainder, so seconds/decimals are always zero)
+function fmtAxisTime(sec){
+  sec=Math.round(sec);
+  const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60);
+  return h+':'+String(m).padStart(2,'0');
+}
+function fmtAxisDist(m){
+  if(m===null||m===undefined)return '–';
+  return unitSystem==='imperial'?Math.round(m/1609.344)+' mi':Math.round(m/1000)+' km';
+}
+// row of tick labels along the x-axis, aligned under the vertical grid lines
+// (distance: 5mi/10km increments; time: 15min increments)
 function buildAxisRow(profile,xMode){
   if(!profile||profile.length<2)return '';
   const t0=profile[0][2];
   const xs=profile.map(p=>profileX(p,xMode,t0));
   const minX=xs[0],maxX=xs[xs.length-1];
-  const ticks=5;
+  const spanX=(maxX-minX)||1;
+  const interval=xMode==='time'?900:(unitSystem==='imperial'?8046.72:10000);
+  let vals=gridValues(minX,maxX,interval);
+  if(!vals.length)vals=[minX,maxX];
   let html='<div class="axis-row">';
-  for(let i=0;i<ticks;i++){
-    const val=minX+(i/(ticks-1))*(maxX-minX);
-    html+='<span>'+esc(xMode==='time'?fmtDuration(val):fmtDistU(val))+'</span>';
-  }
+  vals.forEach(v=>{
+    const pct=(v-minX)/spanX*100;
+    const align=pct<1?'translateX(0)':pct>99?'translateX(-100%)':'translateX(-50%)';
+    html+='<span style="left:'+pct.toFixed(2)+'%;transform:'+align+'">'+esc(xMode==='time'?fmtAxisTime(v):fmtAxisDist(v))+'</span>';
+  });
   html+='</div>';
   return html;
 }
@@ -717,7 +810,7 @@ function renderSummary(activity){
 
   if(s.profile&&s.profile.length>1){
     const maxVal=COLOR_FIELDS[colorMode]?s[COLOR_FIELDS[colorMode].maxKey]:undefined;
-    html+='<div class="summary-chart"><span class="elev-label elev-max">'+fmtEleU(s.maxEleM)+'</span><span class="elev-label elev-min">'+fmtEleU(s.minEleM)+'</span>'+buildSparkline(s.profile,xMode,colorMode,maxVal)+'</div>';
+    html+='<div class="summary-chart" onpointermove="chartHover(event,this)" onpointerleave="chartHoverEnd(this)"><span class="elev-label elev-max">'+fmtEleU(s.maxEleM)+'</span><span class="elev-label elev-min">'+fmtEleU(s.minEleM)+'</span><span class="chart-tooltip"></span>'+buildSparkline(s.profile,xMode,colorMode,maxVal)+'</div>';
     html+=buildAxisRow(s.profile,xMode);
     html+='<div class="zone-buttons">';
     if(s.avgHR!==undefined)html+='<button class="zone-btn'+(colorMode==='hr'?' active':'')+'" onclick="setColorMode(\'hr\')">Heart Rate Zones</button>';
@@ -933,7 +1026,56 @@ function setAll(c){
     b.textContent=c?'▸':'▾';
   });
 }
-function filterTree(q){document.querySelectorAll('#tree .row').forEach(r=>{r.classList.remove('highlight');if(q&&r.textContent.toLowerCase().includes(q.toLowerCase()))r.classList.add('highlight')})}
+// filters the tree to matching rows + the ancestor chain needed to reach them;
+// if a key/tag row itself matches, its whole value (children) stays visible too
+function filterTree(q){
+  const rows=Array.from(document.querySelectorAll('#tree .row'));
+  const ql=q.trim().toLowerCase();
+  if(!ql){
+    rows.forEach(r=>{r.classList.remove('highlight');r.style.display=''});
+    document.querySelectorAll('#tree .node').forEach(n=>{n.style.display=''});
+    return;
+  }
+  const matched=new Set();
+  rows.forEach(r=>{
+    if(r.textContent.toLowerCase().includes(ql)){matched.add(r);r.classList.add('highlight')}
+    else r.classList.remove('highlight');
+  });
+  // nodes whose contents are shown because their own header row matched (a matched
+  // key/tag reveals its value) -- only for "simple" values with no nested
+  // keys/tags of their own, so matching a container key (e.g. "team_leads")
+  // doesn't dump its entire subtree
+  const subtreeShow=new Set();
+  matched.forEach(r=>{
+    if(r.dataset.id){
+      const node=document.getElementById(r.dataset.id);
+      if(node&&!node.querySelector('.node'))subtreeShow.add(node);
+    }
+  });
+  // nodes that are ancestors of a match, kept open so the match stays reachable
+  const ancestorShow=new Set();
+  matched.forEach(r=>{
+    let p=r.parentElement;
+    while(p&&p.id!=='tree'){
+      if(p.classList.contains('node'))ancestorShow.add(p);
+      p=p.parentElement;
+    }
+  });
+  document.querySelectorAll('#tree .node').forEach(n=>{
+    n.style.display=(subtreeShow.has(n)||ancestorShow.has(n))?'block':'none';
+  });
+  rows.forEach(r=>{
+    let visible;
+    if(r.dataset.id){
+      const node=document.getElementById(r.dataset.id);
+      visible=matched.has(r)||(node&&(subtreeShow.has(node)||ancestorShow.has(node)));
+    }else{
+      const parent=r.parentElement;
+      visible=matched.has(r)||(parent&&subtreeShow.has(parent));
+    }
+    r.style.display=visible?'':'none';
+  });
+}
 function reset(){
   currentActivity=null;
   document.getElementById('tree').innerHTML='';
