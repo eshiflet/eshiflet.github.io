@@ -1,275 +1,286 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Cross Country Bicycle Ride</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
 
-	<head>
-		<meta http-equiv="content-type" content="text/html;charset=iso-8859-1">
-		<meta name="generator" content="Adobe GoLive 4">
-		<title>pRAAm: Maps and Legends</title>
-		<meta name="keywords" content="Iowa Falls to Grinnell">
-		
-		<!-- Google Analytics -->
-		<script type="text/javascript">
+    <!-- Le styles -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <style type="text/css">
+      body {
+        padding-top: 70px;
+        padding-bottom: 40px;
+      }
+      .hero-unit {
+        padding: 3rem;
+        background-color: #eee;
+        border-radius: 0.5rem;
+      }
+      .day-sidebar {
+        position: sticky;
+        top: 80px;
+        max-height: calc(100vh - 90px);
+        overflow-y: auto;
+      }
+      .day-sidebar .nav-link {
+        padding: 0.25rem 0.75rem;
+        cursor: pointer;
+      }
+      .day-sidebar .nav-link.active {
+        background-color: #0d6efd;
+        color: #fff;
+      }
+      .day-sidebar .nav-link:hover {
+        background-color: rgba(0, 0, 0, 0.075);
+      }
+      .day-sidebar .nav-link.active:hover {
+        background-color: #0b5ed7;
+      }
+      .day-sidebar h6 {
+        margin-top: 1rem;
+      }
+      #routeMap {
+        height: 500px;
+        border-radius: 0.5rem;
+        margin-top: 1rem;
+      }
+      #elevationStats {
+        font-size: 1.1rem;
+        color: #495057;
+      }
+      #elevationChart {
+        max-height: 180px;
+      }
+    </style>
 
-		  var _gaq = _gaq || [];
-		  _gaq.push(['_setAccount', 'UA-32244838-1']);
-		  _gaq.push(['_trackPageview']);
+    <!-- Le fav and touch icons -->
+    <link rel="shortcut icon" href="icons/favicon.ico">
 
-		  (function() {
-		    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-		    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-		    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-		  })();
+  </head>
 
-		</script>		
-		
-	</head>
+  <body>
 
-	<body bgcolor="#cccccc">
-		<table border="0" cellpadding="5" cellspacing="2" width="100%" bgcolor="#f0f0f0">
-			<tr>
-				<td>
-					<h1>pRAAm: Maps and Legends</h1>
-				</td>
-				<td>
-					<div align="right">
-<!--						<a href="../index.html">Home<br>
-						</a><a href="praam_index.html">Up to pRAAm</a></div> -->
-				</td>
-			</tr>
-		</table>
-		<p>
-		<table border="0" cellpadding="5" cellspacing="2" width="100%" bgcolor="#f0f0f0">
-			<tr>
-				<td valign="top">Yes, I know this looks really ancient... because I put it together twenty years ago. And it's missing a few maps at the end of the ride that I'll dig up later. This is just a project to play around with bootstrap and Google maps, and maybe resurrect an old site.  As for the ride, we stopped taking state highways and started using local roads once reaching Iowa and didn't end up following the maps as closely.</td>
-				<td>
-					<div align="right">
-						<a href="nation.gif">USA map</a></div>
-				</td>
-			</tr>
-		</table>
-		</p>
-		<p>
-		<table border="0" cellpadding="5" cellspacing="2" width="100%" bgcolor="#f0f0f0">
-			<tr>
-				<td width="15%">
-					<h2><font size="2">1 - August 17</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_01.gif">Tillamook to Portland</a></td>
-				<td width="15%">
-					<h2><font size="2">8 - August 24</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_08.gif">Mtn. Home to Craters of the Moon</a></td>
-			</tr>
-			<tr>
-				<td width="15%">
-					<h2><font size="2">2 - August 18</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_02.gif">Portland to Government Camp</a></td>
-				<td width="15%">
-					<h2><font size="2">9 - August 25</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_09.gif">Craters of the Moon to Idaho Falls</a></td>
-			</tr>
-			<tr>
-				<td width="15%">
-					<h2><font size="2">3 - August 19</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_03.gif">Government Camp to Prineville</a></td>
-				<td width="15%">
-					<h2><font size="2">10 - August 26</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_10.gif">Idaho Falls to Jackson</a></td>
-			</tr>
-			<tr>
-				<td width="15%">
-					<h2><font size="2">4 - August 20</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_04.gif">Prineville to Mt. Vernon</a></td>
-				<td width="15%">
-					<h2><font size="2">11 - August 27</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_11.gif">Jackson to Dubois</a></td>
-			</tr>
-			<tr>
-				<td width="15%">
-					<h2><font size="2">5 - August 21</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_05.gif">Mt. Vernon to Brogan</a></td>
-				<td width="15%">
-					<h2><font size="2">12 - August 28</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_12.gif">Dubois to Riverton</a></td>
-			</tr>
-			<tr>
-				<td width="15%">
-					<h2><font size="2">6 - August 22</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_06.gif">Brogan to Homedale</a></td>
-				<td width="15%">
-					<h2><font size="2">13 - August 29</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_13.gif">Riverton to Casper</a></td>
-			</tr>
-			<tr>
-				<td width="15%">
-					<h2><font size="2">7 - August 23</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_07.gif">Homedale to Mtn. Home</a></td>
-				<td width="15%">
-					<h2><font size="2">14 - August 30</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_14.gif">Casper to Lusk</a></td>
-			</tr>
-		</table>
-		</p>
-		<p>
-		<table border="0" cellpadding="5" cellspacing="2" width="100%" bgcolor="#f0f0f0">
-			<tr>
-				<td width="15%" valign="top">
-					<h2><font size="2">15 - August 31</font></h2>
-				</td>
-				<td width="35%" valign="top"><a href="Profile_15.gif">Lusk to Chadron</a></td>
-				<td width="15%" valign="top">
-					<h2><font size="2">22 - September 7</font></h2>
-				</td>
-				<td width="35%" valign="top"><a href="Profile_22.gif">Grinnell to Muscatine</a></td>
-			</tr>
-			<tr>
-				<td width="15%">
-					<h2><font size="2">16 - September 1</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_16.gif">Chadron to Valentine</a></td>
-				<td width="15%">
-					<h2><font size="2">23 - September 8</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_23.gif">Muscatine to Peru</a></td>
-			</tr>
-			<tr>
-				<td width="15%">
-					<h2><font size="2">17 - September 2</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_17.gif">Valentine to O'Neill</a></td>
-				<td width="15%">
-					<h2><font size="2">24 - September 9</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_24.gif">Peru to Cedar Lake</a></td>
-			</tr>
-			<tr>
-				<td width="15%">
-					<h2><font size="2">18 - September 3</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_18.gif">O'Neill to Sioux City</a></td>
-				<td width="15%">
-					<h2><font size="2">25 - September 10</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_25.gif">Cedar Lake to Nappanee</a></td>
-			</tr>
-			<tr>
-				<td width="15%">
-					<h2><font size="2">19 - September 4</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_19.gif">Sioux City to Storm Lake</a></td>
-				<td width="15%">
-					<h2><font size="2">26 - September 11</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_26.gif">Nappanee to Napoleon</a></td>
-			</tr>
-			<tr>
-				<td width="15%">
-					<h2><font size="2">20 - September 5</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_20.gif">Storm Lake to Iowa Falls</a></td>
-				<td width="15%">
-					<h2><font size="2">27 - September 12</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_27.gif">Napoleon to Vermilion</a></td>
-			</tr>
-			<tr>
-				<td width="15%">
-					<h2><font size="2">21 - September 6</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_21.gif">Iowa Falls to Grinnell</a></td>
-				<td width="15%">
-					<h2><font size="2">28 - September 13</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_28.gif">Vermilion to Andover</a></td>
-			</tr>
-		</table>
-		</p>
-		<p>
-		<table border="0" cellpadding="5" cellspacing="2" width="100%" bgcolor="#f0f0f0">
-			<tr>
-				<td width="15%" valign="top">
-					<h2><font size="2">29 - September 14</font></h2>
-				</td>
-				<td width="35%" valign="top"><a href="Profile_29.gif">Andover to Warren</a></td>
-				<td width="15%" valign="top">
-					<h2><font size="2"></font></h2>
-				</td>
-				<td width="35%" valign="top"></td>
-			</tr>
-			<tr>
-				<td width="15%">
-					<h2><font size="2">30 - September 15</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_30.gif">Warren to Coudersport</a></td>
-				<td width="15%">
-					<h2><font size="2"></font></h2>
-				</td>
-				<td width="35%"></td>
-			</tr>
-			<tr>
-				<td width="15%">
-					<h2><font size="2">31 - September 16</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_31.gif">Coudersport to Towanda</a></td>
-				<td width="15%">
-					<h2><font size="2"></font></h2>
-				</td>
-				<td width="35%"></td>
-			</tr>
-			<tr>
-				<td width="15%">
-					<h2><font size="2">32 - September 17</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_32.gif">Towanda to Honesdale</a></td>
-				<td width="15%">
-					<h2><font size="2"></font></h2>
-				</td>
-				<td width="35%"></td>
-			</tr>
-			<tr>
-				<td width="15%">
-					<h2><font size="2">33 - September 18</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_33.gif">Honesdale to Franklin</a></td>
-				<td width="15%">
-					<h2><font size="2"></font></h2>
-				</td>
-				<td width="35%"></td>
-			</tr>
-			<tr>
-				<td width="15%">
-					<h2><font size="2">34 - September 19</font></h2>
-				</td>
-				<td width="35%"><a href="Profile_34.gif">Franklin to New York City</a></td>
-				<td width="15%">
-					<h2><font size="2"></font></h2>
-				</td>
-				<td width="35%"></td>
-			</tr>
-			<tr>
-				<td width="15%">
-					<h2><font size="2"></font></h2>
-				</td>
-				<td width="35%"></td>
-				<td width="15%">
-					<h2><font size="2"></font></h2>
-				</td>
-				<td width="35%"></td>
-			</tr>
-		</table>
-		</p>
-		<p>
-	</body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+      <div class="container">
+        <a class="navbar-brand" href="http://www.ericshiflet.com">EricShiflet.com</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav">
+            <li class="nav-item active"><a class="nav-link" href="http://www.ericshiflet.com">Home</a></li>
+            <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
+            <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
 
+    <div class="container-fluid">
+      <div class="row">
+        <nav class="col-md-3" id="day-nav">
+          <div class="day-sidebar">
+            <h6 class="px-2 mt-3 mb-2 text-uppercase text-muted">Click a day to see the map</h6>
+            <ul class="nav nav-pills flex-column">
+              <li class="nav-item"><h6 class="px-2 mt-3 mb-1 text-uppercase text-muted">Oregon</h6></li>
+                <li class="nav-item"><a class="nav-link active" data-route="changeMapTillamookToP">August 17, Tillamook to Portland</a></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapPortlandToG">August 18, Portland to Government Camp</a></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapGovCampToP">August 19, Government Camp to Prineville</a></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapPrinevilleToM">August 20, Prineville to Mt. Vernon</a></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapMtVernonToB">August 21, Mt. Vernon to Brogan</a></li>
+              <li class="nav-item"><h6 class="px-2 mt-3 mb-1 text-uppercase text-muted">Idaho</h6></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapBroganToC">August 22, Brogan to Caldwell</a></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapCaldwellToMH">August 23, Caldwell to Mountain Home</a></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapMountainHomeToF">August 24, Mountain Home to Fairfield</a></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapFairfieldToCOTM">August 25, Fairfield to Craters of the Moon</a></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapCOTMToIF">August 26, Craters of the Moon to Idaho Falls</a></li>
+              <li class="nav-item"><h6 class="px-2 mt-3 mb-1 text-uppercase text-muted">Wyoming</h6></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapIdahoFallsToJ">August 27, Idaho Falls to Jackson Hole</a></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapJacksonToD">August 28, Jackson Hole to Dubois</a></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapDuboisToR">August 29, Dubois to Riverton</a></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapRivertonToC">August 31, Riverton to Casper</a></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapCasperToL">September 1, Casper to Lusk</a></li>
+              <li class="nav-item"><h6 class="px-2 mt-3 mb-1 text-uppercase text-muted">Nebraska</h6></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapLuskToC">September 2, Lusk to Chadron</a></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapChadronToG">September 3, Chadron to Gordon</a></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapGordonToV">September 4, Gordon to Valentine</a></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapValentineToO">September 5, Valentine to O'Neill</a></li>
+              <li class="nav-item"><h6 class="px-2 mt-3 mb-1 text-uppercase text-muted">Iowa</h6></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapOneillToSC">September 6, O'Neill to Sioux City</a></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapSiouxCityToSC">September 7, Sioux City to Sac City</a></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapSacCityToA">September 8, Sac City to Ames</a></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapAmesToG">September 9, Ames to Grinnell</a></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapGrinnellToM">September 10, Grinnell to Muscatine</a></li>
+              <li class="nav-item"><h6 class="px-2 mt-3 mb-1 text-uppercase text-muted">Illinois</h6></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapMuscatineToP">September 12, Muscatine to Peru</a></li>
+              <li class="nav-item"><h6 class="px-2 mt-3 mb-1 text-uppercase text-muted">Indiana</h6></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapPeruToCL">September 14, Peru to Cedar Lake</a></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapCedarLakeToN">September 15, Cedar Lake to Nappanee</a></li>
+              <li class="nav-item"><h6 class="px-2 mt-3 mb-1 text-uppercase text-muted">Ohio</h6></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapNappaneeToD">September 16, Nappanee to Defiance</a></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapDefianceToM">September 17, Defiance to Milan</a></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapMilanToC">September 18, Milan to Chardon</a></li>
+              <li class="nav-item"><h6 class="px-2 mt-3 mb-1 text-uppercase text-muted">Pennsylvania</h6></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapChardonToC">September 20, Chardon to Corry</a></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapCorryToC">September 21, Corry to Coudersport</a></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapCoudersportToT">September 22, Coudersport to Towanda</a></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapTowandaToH">September 23, Towanda to Hawley</a></li>
+              <li class="nav-item"><h6 class="px-2 mt-3 mb-1 text-uppercase text-muted">New York</h6></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapHawleyToC">September 24, Hawley to Congers</a></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapCongersToTS">September 25, Congers to Times Square</a></li>
+                <li class="nav-item"><a class="nav-link" data-route="changeMapTSToCI">September 26, Times Square to Coney Island</a></li>
+            </ul>
+          </div><!--/.day-sidebar -->
+        </nav><!--/col-md-3-->
+        <div class="col-md-9">
+           <div class="hero-unit">
+              <div id='FrameMap'><h2>Tillamook to Portland</h2><p>84 miles, 3244 feet vertical, 6 hours 3 minutes</p></div>
+              <div id="routeMap"></div>
+            </div><!--/hero-unit-->
+
+          <div class="hero-unit mt-4" id="elevationSection" style="display:none;">
+            <h2>Elevation Profile</h2>
+            <p id="elevationStats"></p>
+            <canvas id="elevationChart"></canvas>
+          </div><!--/elevationSection-->
+
+          <div class="row mt-4">
+            <div class="col-md-4">
+              <h2>What?</h2>
+              <p>Eric and <a href="https://prestonhunt.com/raam/">Preston</a> rode across the country in 2003, during the time before smartphones with GPS or even Google maps. We carried a notebook with one 8"x10" map for each day from an ink jet printer. It got wet in the rain.</p>
+              <!-- <p><a class="btn" href="otherSites.html">Other cross-country sites &raquo;</a></p> -->
+            </div>
+            <div class="col-md-4">
+              <p><a class="btn btn-primary btn-lg" href="maps_old.html">See the original maps &raquo;</a></p>
+            </div>
+            <div class="col-md-4">
+              <h2>Equipment</h2>
+              <p>List of all the gear we used during the trip. </p>
+              <p><a class="btn btn-outline-secondary" href="#">Link not working yet... &raquo;</a></p>
+            </div>
+          </div><!--/row-->
+        </div><!--/col-md-9-->
+      </div><!--/row-->
+
+
+    </div><!--/.container-fluid-->
+
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script>
+      // Route + elevation data used to live inline here as ~5,500 lines of
+      // JS object literals (one entry per day). It's now a static JSON file
+      // fetched once at load, keeping this page's markup/logic small and the
+      // data editable without touching HTML. Requires being served over
+      // http(s) (GitHub Pages) — fetch() of a local file won't work from a
+      // file:// URL.
+      var ROUTES = {};
+      var ELEVATION = {};
+      var routeMap, routeLayer, elevationChart;
+
+      // highlight the active day in the sidebar
+      function setActiveDay(el) {
+        document.querySelectorAll('#day-nav .nav-link').forEach(function(link) {
+          link.classList.remove('active');
+        });
+        if (el) el.classList.add('active');
+      }
+
+      function renderElevation(key){
+        var section = document.getElementById('elevationSection');
+        var data = ELEVATION[key];
+        if (!data) {
+          section.style.display = 'none';
+          return;
+        }
+        section.style.display = '';
+        document.getElementById('elevationStats').innerHTML =
+          '↑ ' + data.ascent.toLocaleString() + ' ft &middot; ↓ ' + data.descent.toLocaleString() + ' ft';
+        var ctx = document.getElementById('elevationChart').getContext('2d');
+        if (elevationChart) { elevationChart.destroy(); }
+        elevationChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: data.distances,
+            datasets: [{
+              data: data.elevations,
+              borderColor: '#0d6efd',
+              backgroundColor: 'rgba(13, 110, 253, 0.15)',
+              borderWidth: 2,
+              pointRadius: 0,
+              fill: true,
+              tension: 0.25
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: {
+                title: { display: true, text: 'Miles' },
+                ticks: { maxTicksLimit: 10 }
+              },
+              y: {
+                title: { display: true, text: 'Elevation (ft)' }
+              }
+            }
+          }
+        });
+      }
+
+      function initRouteMap(){
+        routeMap = L.map('routeMap');
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 18,
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(routeMap);
+      }
+
+      function renderRoute(key, el){
+        setActiveDay(el);
+        var r = ROUTES[key];
+        document.getElementById('FrameMap').innerHTML = '<h2>' + r.title + '</h2><p>' + r.stats + '</p><p><small><a href="' + r.link + '" target="_blank" rel="noopener">Open route in Google Maps »</a></small></p>';
+        if (routeLayer) { routeMap.removeLayer(routeLayer); }
+        var latlngs = r.points;
+        var poly = L.polyline(latlngs, {color: '#0d6efd', weight: 4});
+        var startMarker = L.marker(latlngs[0]).bindPopup('Start');
+        var endMarker = L.marker(latlngs[latlngs.length - 1]).bindPopup('End');
+        routeLayer = L.layerGroup([poly, startMarker, endMarker]).addTo(routeMap);
+        routeMap.fitBounds(poly.getBounds(), {padding: [20, 20]});
+        renderElevation(key);
+      }
+
+      // One delegated listener replaces 37 near-identical wrapper functions
+      // that used to exist only so each nav link's onclick had a same-named
+      // function to call. Nav links now carry data-route="<key>" instead.
+      document.getElementById('day-nav').addEventListener('click', function(e){
+        var link = e.target.closest('[data-route]');
+        if (!link) return;
+        renderRoute(link.dataset.route, link);
+      });
+
+      // Load route/elevation data, then initialize the shared map and show
+      // whichever day is marked active in the sidebar HTML.
+      fetch('maps-data.json')
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          ROUTES = data.routes;
+          ELEVATION = data.elevation;
+          initRouteMap();
+          var activeLink = document.querySelector('#day-nav .nav-link.active');
+          renderRoute(activeLink.dataset.route, activeLink);
+        });
+    </script>
+
+    <!-- Cloudflare Web Analytics -->
+    <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "2ea9d8a1815e463aab20bbf8ba775c12"}'></script>
+    <!-- End Cloudflare Web Analytics -->
+  </body>
 </html>
